@@ -120,7 +120,7 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
                                                   // need to merge them
                 {
                     auto& e1   = incident[v1][e0.first]; // edge {v1,v}
-                    e1->edge.w = plus(e1->edge.w, e->edge.w);
+                    e1->edge.w = plus(e1->edge.w, e0.second->edge.w);
                     heap.update(e1->handle);
                     {
                         // std::cout
