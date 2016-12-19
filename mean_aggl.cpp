@@ -141,6 +141,7 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
                         e0.second->edge.v1 = v1;
                     incident[e0.first][v1] = e0.second;
                 }
+                incident[v0].erase(e0.first);
             }
         }
     }
