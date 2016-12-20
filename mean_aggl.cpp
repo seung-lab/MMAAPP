@@ -140,6 +140,7 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
                     if (e0.second->edge.v1 == v0)
                         e0.second->edge.v1 = v1;
                     incident[e0.first][v1] = e0.second;
+                    incident[v1][e0.first] = e0.second;
                 }
                 incident[v0].erase(e0.first);
             }
