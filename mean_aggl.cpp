@@ -129,7 +129,7 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
                         //     << " to " << sets.find_set(e0.second->edge.v1)
                         //     << " of " << e0.second->edge.w << " ";
                         e0.second->edge.w = Limits::max();
-                        heap.update(e0.second->handle);
+                        heap.increase(e0.second->handle);
                         heap.pop();
                     }
                 }
