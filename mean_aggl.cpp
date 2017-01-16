@@ -99,6 +99,9 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
 
                 // std::cout << "Joined " << s0 << " and " << s1 << " to " << s
                 //           << " at " << e->edge.w << "\n";
+                if (s0 != s1) {
+                    std::cout << s0 << " " << s1 << " " << s << " " << e->edge.w << std::endl;
+                }
             }
 
             if (incident[v0].size() > incident[v1].size())
@@ -206,7 +209,7 @@ template <class CharT, class Traits>
 ::std::basic_ostream<CharT, Traits>&
 operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
 {
-    os << v.sum << "/" << v.num << "=" << v.sum / v.num;
+    os << v.sum/v.num;
     return os;
 }
 
