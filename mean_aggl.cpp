@@ -166,17 +166,43 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
 
     std::cout << "Total of " << next << " segments\n";
 
+    while (heap.size())
+    {
+        auto e = heap.top();
+        heap.pop();
+        auto v0 = e->edge.v0;
+        auto v1 = e->edge.v1;
+        auto s0 = sets.find_set(v0);
+        auto s1 = sets.find_set(v1);
+        std::cout << s0 << " " << s1 << " " << e->edge.w << std::endl;
+    }
+
     return remaps;
 }
+
+typedef struct atomic_edge
+{
+    uint64_t u1;
+    uint64_t u2;
+    uint64_t area;
+    explicit constexpr atomic_edge(uint64_t w1 = 0, uint64_t w2 = 0, uint64_t a = 0)
+        : u1(w1)
+        , u2(w2)
+        , area(a)
+    {
+    }
+} atomic_edge_t;
 
 struct mean_edge
 {
     double sum;
     double num;
+    atomic_edge_t * repr;
 
-    explicit constexpr mean_edge(double s = 0, double n = 1)
+    explicit constexpr mean_edge(double s = 0, double n = 1, atomic_edge_t * r = NULL)
         : sum(s)
         , num(n)
+        , repr(r)
     {
     }
 };
@@ -185,7 +211,12 @@ struct mean_edge_plus
 {
     mean_edge operator()(mean_edge const& a, mean_edge const& b) const
     {
-        return mean_edge(a.sum + b.sum, a.num + b.num);
+        atomic_edge_t * new_repr = NULL;
+        if (a.repr->area > b.repr->area)
+            new_repr = a.repr;
+        else
+            new_repr = b.repr;
+        return mean_edge(a.sum + b.sum, a.num + b.num, new_repr);
     }
 };
 
@@ -201,7 +232,7 @@ struct mean_edge_limits
 {
     static constexpr mean_edge max()
     {
-        return mean_edge(std::numeric_limits<double>::max(), 1);
+        return mean_edge(std::numeric_limits<double>::max(), 1, NULL);
     }
 };
 
@@ -209,7 +240,7 @@ template <class CharT, class Traits>
 ::std::basic_ostream<CharT, Traits>&
 operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
 {
-    os << v.sum/v.num;
+    os << v.sum / v.num << " " << v.repr->u1 << " " <<  v.repr->u2;
     return os;
 }
 
@@ -224,6 +255,8 @@ int main()
     {
         edge_t<mean_edge> e;
         std::cin >> e.v0 >> e.v1 >> e.w.sum >> e.w.num;
+        atomic_edge_t * ae = new atomic_edge_t(e.v0, e.v1, e.w.sum);
+        e.w.repr = ae;
         rg.push_back(e);
     }
 
