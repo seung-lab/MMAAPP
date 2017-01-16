@@ -174,34 +174,25 @@ function connected(subset, rg, facesizes)
 end
 
 function process_volume(seg)
+    rg_file = open("rg_volume.in")
     rg_volume = DefaultDict(Int,Set{Int}, ()->Set{Int}())
-    d_sizes = DefaultDict(Int,Int,()->0)
-    sz = size(seg)
-    for z in 1:sz[3]
-        for y in 1:sz[2]
-            for x in 1:sz[1]
-                if seg[x,y,z] == 0
-                    continue
-                end
-                d_sizes[seg[x,y,z]] += 1
-                if ( (x > 1) && seg[x-1,y,z]!=0 && seg[x,y,z]!=seg[x-1,y,z])
-                  p = minmax(seg[x,y,z], seg[x-1,y,z])
-                  push!(rg_volume[p[1]],p[2])
-                  push!(rg_volume[p[2]],p[1])
-                end
-                if ( (y > 1) && seg[x,y-1,z]!=0 && seg[x,y,z]!=seg[x,y-1,z])
-                  p = minmax(seg[x,y,z], seg[x,y-1,z])
-                  push!(rg_volume[p[1]],p[2])
-                  push!(rg_volume[p[2]],p[1])
-                end
-                if ( (z > 1) && seg[x,y,z-1]!=0 && seg[x,y,z]!=seg[x,y,z-1])
-                  p = minmax(seg[x,y,z], seg[x,y,z-1])
-                  push!(rg_volume[p[1]],p[2])
-                  push!(rg_volume[p[2]],p[1])
-                end
-            end
-        end
+    for ln in eachline(rg_file)
+        data = split(ln, " ")
+        u1 = parse(Int,data[1])
+        u2 = parse(Int,data[2])
+        push!(rg_volume[u1],u2)
+        push!(rg_volume[u2],u1)
     end
+    close(rg_file)
+    size_file = open("sv_size.in")
+    d_sizes = DefaultDict(Int,Int,()->0)
+    for ln in eachline(size_file)
+        data = split(ln, " ")
+        seg_id = parse(Int, data[1])
+        sz = parse(Int,data[2])
+        d_sizes[seg_id] = sz
+    end
+    close(size_file)
     return rg_volume, d_sizes
 end
 
