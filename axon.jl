@@ -89,18 +89,27 @@ function check_connectivity(s, segment, rg_volume)
     return cc
 end
 
-function really_check_freeends(ends, segment, rg_volume, d_sizes)
+function really_check_freeends(ends, segment, rg_volume, d_sizes, d_faceareas)
     free_ends = Set{Int}()
-    avg_volume = sum_vol(segment,d_sizes)/length(collect(segment))
+    boundary_segs = keys(d_faceareas)
     for s in ends
-        if d_sizes[s] > 5*avg_volume
+        end_segment = Set{Int}()
+        count = 0
+        if s in boundary_segs
             continue
         end
-        end_segment = Set{Int}()
         for neighboor in rg_volume[s]
             if neighboor in segment
+                count += 1
                 push!(end_segment, neighboor)
+                if neighboor in boundary_segs
+                    count = 100
+                    break
+                end
             end
+        end
+        if count > 2
+            continue
         end
         push!(end_segment, s)
         cc = check_connectivity(end_segment, segment, rg_volume)
@@ -126,15 +135,12 @@ function check_segment(segment, rg_volume, d_sizes, d_faceareas)
             push!(free_ends, s)
         end
     end
-    if count * 2 > length(collect(segment)) && length(collect(segment)) > 5
-        ends = setdiff(free_ends, keys(d_faceareas))
-        return really_check_freeends(ends, segment, rg_volume, d_sizes)
-    elseif count * 3 > length(collect(segment)) && length(collect(segment)) > 10
-        ends = setdiff(free_ends, keys(d_faceareas))
-        return really_check_freeends(ends, segment, rg_volume, d_sizes)
-    else
+    #ends = setdiff(free_ends, keys(d_faceareas))
+    ends = really_check_freeends(free_ends, segment, rg_volume, d_sizes, d_faceareas)
+    if length(ends) > 3 && (count * 3 < length(segment))
         return Set{Int}()
     end
+    return ends
 end
 
 function connected(subset, rg, facesizes)
@@ -328,12 +334,12 @@ println("size of the rg: $(length(keys(rg_faces)))")
 checks = []
 for l in l_segs
     if l[3] < 10000000 && l[2] > 5
-        println("segid: $(l[1]), parts: $(l[2]), size: $(l[3])")
         ccsz = connected(intersect(keys(rg_faces), segs[l[1]]), rg_faces, d_faceareas)
         faces = faces_touched(segs[l[1]], face_segs)
-        axion_freeends = check_segment(segs[l[1]], rg_volume, d_sizes, d_faceareas)
-        if !isempty(axion_freeends)
-            push!(checks, [l[1], axion_freeends])
+        axon_freeends = check_segment(segs[l[1]], rg_volume, d_sizes, d_faceareas)
+        if !isempty(axon_freeends) && length(axon_freeends) < 10
+            println("segid: $(l[1]), parts: $(l[2]), size: $(l[3]), free_ends: $(length(axon_freeends))")
+            push!(checks, [l[1], axon_freeends])
         end
     end
 end
