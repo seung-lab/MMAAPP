@@ -11,11 +11,11 @@ end
 
 function check_edge(edge, seg1, seg2)
     neighboor1 = rg_volume[edge.v1]
-    if length(collect(intersect(seg2,neighboor1))) > 1
+    if length(intersect(seg2,neighboor1)) > 1
         return false
     end
     neighboor2 = rg_volume[edge.v2]
-    if length(collect(intersect(seg1,neighboor2))) > 1
+    if length(intersect(seg1,neighboor2)) > 1
         return false
     end
     if edge.num > 300 && edge.sum/edge.num < 0.15
@@ -139,7 +139,7 @@ end
 
 function connected(subset, rg, facesizes)
     visited = Set{Int}()
-    if length(collect(subset)) == 0
+    if length(subset) == 0
         println("no exit face")
         return Int[]
     end
@@ -310,21 +310,21 @@ end
 
 sgm = readsgm("sgm.h5")
 new_rg = read_rg("new_rg.txt")
-println("size of rg: $(length(collect(keys(new_rg))))")
+println("size of rg: $(length(keys(new_rg)))")
 @time rg_volume, d_sizes = process_volume(sgm.segmentation)
-println("$(length(collect(keys(d_sizes))))")
+println("$(length(keys(d_sizes)))")
 segs = agglomerate(sgm)
 
 l_segs = []
 
 for k in keys(segs)
-    push!(l_segs, [k,length(collect(segs[k])),sum_vol(collect(segs[k]), d_sizes)])
+    push!(l_segs, [k,length(segs[k]),sum_vol(collect(segs[k]), d_sizes)])
 end
 
 #sort!(l_segs, by=x->x[3]/x[2],rev=true)
 
 rg_faces, face_segs, d_faceareas = process_faces(sgm.segmentation)
-println("size of the rg: $(length(collect(keys(rg_faces))))")
+println("size of the rg: $(length(keys(rg_faces)))")
 checks = []
 for l in l_segs
     if l[3] < 10000000 && l[2] > 5
