@@ -4,12 +4,23 @@ using DataStructures
 using Combinatorics
 
 type atomic_edge
-    sum::AbstractFloat
+    p1::Int
+    p2::Int
+    sum::Float32
     num::Int
     v1::Int
     v2::Int
-    aff::AbstractFloat
+    aff::Float32
     area::Int
+end
+
+function print_edge(edge, mean_aff)
+    area = edge.num
+    sum_aff = edge.sum
+    if mean_aff > 0
+        sum_aff = area*mean_aff
+    end
+    println("$(edge.p1) $(edge.p2) $(sum_aff) $(area) $(edge.v1) $(edge.v2) $(edge.aff) $(edge.area)")
 end
 
 function check_edge(edge, seg1, seg2)
@@ -22,21 +33,27 @@ function check_edge(edge, seg1, seg2)
         neighboor1 = rg_volume[edge.v2]
         neighboor2 = rg_volume[edge.v1]
     end
-    if length(intersect(seg2,neighboor1)) > 1
-        return false
-    end
-    if length(intersect(seg1,neighboor2)) > 1
-        return false
-    end
-    #len1 = length(intersect(seg2,neighboor1))
-    #len2 = length(intersect(seg1,neighboor2))
-    #if len1 == 1 && len2 == 1
-    #    return false
-    #elseif len1 > 1 && len2 > 1
+    #if length(intersect(seg2,neighboor1)) > 1
     #    return false
     #end
-    if edge.num > 300 && edge.sum/edge.num < 0.15
+    #if length(intersect(seg1,neighboor2)) > 1
+    #    return false
+    #end
+    #if edge.num > 300 && edge.sum/edge.num < 0.15
+    #    return false
+    #end
+    len1 = length(intersect(seg2,neighboor1))
+    len2 = length(intersect(seg1,neighboor2))
+    if len1 == 1 && len2 == 1
+        if edge.num > 300 && edge.sum/edge.num < 0.15
+            return false
+        end
+    elseif len1 > 1 && len2 > 1
         return false
+    else
+        if edge.sum/edge.num < 0.10
+            return false
+        end
     end
     return true
 end
@@ -49,15 +66,15 @@ function read_rg(fn, pd)
         data = split(ln, " ")
         u1 = parse(Int, data[5])
         u2 = parse(Int, data[6])
-        aff = parse(Float64, data[7])
+        aff = parse(Float32, data[7])
         area = parse(Int, data[8])
-        s = parse(Float64, data[3])
+        s = parse(Float32, data[3])
         n = parse(Int, data[4])
-        a_edge = atomic_edge(s,n,u1,u2,aff,area)
         p1 = parse(Int, data[1])
         p2 = parse(Int, data[2])
-        #p1 = get(pd, u1, u1)
-        #p2 = get(pd, u2, u2)
+        a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
+        p1 = get(pd, u1, u1)
+        p2 = get(pd, u2, u2)
         rg[p1][p2] = a_edge
         rg[p2][p1] = a_edge
     end
@@ -342,6 +359,7 @@ end
 function match_axons(axons, segs, new_rg, free_ends)
     visited = Set{atomic_edge}()
     pairs = Int[]
+    edges = Dict{atomic_edge, Float32}()
     for a in keys(axons)
         matches = intersect(keys(new_rg[a]),keys(axons))
         #println("test: $a")
@@ -357,14 +375,16 @@ function match_axons(axons, segs, new_rg, free_ends)
             end
             if check_edge(a_edge, segs[a], segs[b])
                 p = minmax(a,b)
-                println("$(p[1]), $(p[2])")
+                #println("$(p[1]), $(p[2])")
                 println(a_edge)
+                edges[a_edge] = 0.199999
                 push!(pairs, a)
                 push!(pairs, b)
             end
         end
     end
     println(pairs)
+    return edges
 end
 
 function match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
@@ -438,5 +458,21 @@ println("$(length(keys(axons))) axon candidates")
 println("$(length(small_pieces)) small pieces")
 println("$(length(keys(long_axons))) long axon candidates")
 #match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
-match_axons(axons, segs, new_rg, free_ends)
+matches = match_axons(axons, segs, new_rg, free_ends)
+visited = Set{atomic_edge}()
+for edge in keys(matches)
+    print_edge(edge, matches[edge])
+    push!(visited, edge)
+end
+for a in keys(new_rg)
+    for b in keys(new_rg[a])
+        edge = new_rg[a][b]
+        if edge in visited
+            continue
+        else
+            print_edge(edge, -1)
+            push!(visited, edge)
+        end
+    end
+end
 #println([x[1] for x in checks])
