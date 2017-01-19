@@ -184,10 +184,12 @@ typedef struct atomic_edge
 {
     uint64_t u1;
     uint64_t u2;
+    double sum_aff;
     uint64_t area;
-    explicit constexpr atomic_edge(uint64_t w1 = 0, uint64_t w2 = 0, uint64_t a = 0)
+    explicit constexpr atomic_edge(uint64_t w1 = 0, uint64_t w2 = 0, double s_a = 0.0, uint64_t a = 0)
         : u1(w1)
         , u2(w2)
+        , sum_aff(s_a)
         , area(a)
     {
     }
@@ -240,7 +242,7 @@ template <class CharT, class Traits>
 ::std::basic_ostream<CharT, Traits>&
 operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
 {
-    os << v.sum / v.num << " " << v.repr->u1 << " " <<  v.repr->u2;
+    os << v.sum << " " << v.num << " " << v.repr->u1 << " " <<  v.repr->u2 << " " << v.repr->sum_aff << " " << v.repr->area;
     return os;
 }
 
@@ -254,8 +256,10 @@ int main()
     for (std::size_t i = 0; i < n; ++i)
     {
         edge_t<mean_edge> e;
-        std::cin >> e.v0 >> e.v1 >> e.w.sum >> e.w.num;
-        atomic_edge_t * ae = new atomic_edge_t(e.v0, e.v1, e.w.sum);
+        uint64_t u1, u2, area;
+        double sum_aff;
+        std::cin >> e.v0 >> e.v1 >> e.w.sum >> e.w.num >> u1 >> u2 >> sum_aff >>  area;
+        atomic_edge_t * ae = new atomic_edge_t(u1,u2,sum_aff,area);
         e.w.repr = ae;
         rg.push_back(e);
     }

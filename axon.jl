@@ -1,42 +1,65 @@
 using HDF5
 using EMIRT
 using DataStructures
+using Combinatorics
 
 type atomic_edge
-    v1::Int
-    v2::Int
     sum::AbstractFloat
     num::Int
+    v1::Int
+    v2::Int
+    aff::AbstractFloat
+    area::Int
 end
 
 function check_edge(edge, seg1, seg2)
-    neighboor1 = rg_volume[edge.v1]
+    neighboor1 = Set{Int}()
+    neighboor2 = Set{Int}()
+    if edge.v1 in seg1
+        neighboor1 = rg_volume[edge.v1]
+        neighboor2 = rg_volume[edge.v2]
+    else
+        neighboor1 = rg_volume[edge.v2]
+        neighboor2 = rg_volume[edge.v1]
+    end
     if length(intersect(seg2,neighboor1)) > 1
         return false
     end
-    neighboor2 = rg_volume[edge.v2]
     if length(intersect(seg1,neighboor2)) > 1
         return false
     end
+    #len1 = length(intersect(seg2,neighboor1))
+    #len2 = length(intersect(seg1,neighboor2))
+    #if len1 == 1 && len2 == 1
+    #    return false
+    #elseif len1 > 1 && len2 > 1
+    #    return false
+    #end
     if edge.num > 300 && edge.sum/edge.num < 0.15
         return false
     end
     return true
 end
 
-function read_rg(fn)
+function read_rg(fn, pd)
     rg_file = open(fn)
-    rg = Dict{Tuple{Int,Int},atomic_edge}()
+    #rg = Dict{Tuple{Int,Int},atomic_edge}()
+    rg = DefaultDict(Int, Dict{Int, atomic_edge}, ()->Dict{Int, atomic_edge}())
     for ln in eachline(rg_file)
         data = split(ln, " ")
         u1 = parse(Int, data[5])
         u2 = parse(Int, data[6])
-        s = parse(Float32, data[3])
+        aff = parse(Float64, data[7])
+        area = parse(Int, data[8])
+        s = parse(Float64, data[3])
         n = parse(Int, data[4])
-        a_edge = atomic_edge(u1,u2,s,n)
+        a_edge = atomic_edge(s,n,u1,u2,aff,area)
         p1 = parse(Int, data[1])
         p2 = parse(Int, data[2])
-        rg[(p1,p2)] = a_edge
+        #p1 = get(pd, u1, u1)
+        #p2 = get(pd, u2, u2)
+        rg[p1][p2] = a_edge
+        rg[p2][p1] = a_edge
     end
     return rg
 end
@@ -294,11 +317,14 @@ function agglomerate(sgm)
     # find the root id
     for (c,p) in pd
         # list of child node, for path compression
-        clst = Set{Int}([c])
+        clst = Set{Int}(c)
         # find the root
         while haskey(pd, p)
             push!(clst, p)
             p = pd[p]
+        end
+        for c in clst
+            pd[c] = p
         end
         # now p is the root id
         # path compression
@@ -310,58 +336,107 @@ function agglomerate(sgm)
             push!(segs[p],p)
         end
     end
-    return segs
+    return segs, pd
+end
+
+function match_axons(axons, segs, new_rg, free_ends)
+    visited = Set{atomic_edge}()
+    pairs = Int[]
+    for a in keys(axons)
+        matches = intersect(keys(new_rg[a]),keys(axons))
+        #println("test: $a")
+        for b in matches
+            #println("test: $a, $b")
+            a_edge = new_rg[a][b]
+            if a_edge in visited
+                continue
+            end
+            push!(visited, a_edge)
+            if !(a_edge.v1 in free_ends) || !(a_edge.v2 in free_ends)
+                continue
+            end
+            if check_edge(a_edge, segs[a], segs[b])
+                p = minmax(a,b)
+                println("$(p[1]), $(p[2])")
+                println(a_edge)
+                push!(pairs, a)
+                push!(pairs, b)
+            end
+        end
+    end
+    println(pairs)
+end
+
+function match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
+    for s in small_pieces
+        neighboors = keys(new_rg[s])
+        candidates = intersect(neighboors, keys(long_axons))
+        axons = []
+        for c in candidates
+            a_edge = new_rg[s][c]
+            if !(a_edge.v1 in free_ends) && !(a_edge.v2 in free_ends)
+                continue
+            end
+            push!(axons, c)
+        end
+        if length(axons) > 1
+            for p in combinations(axons,2)
+                if haskey(new_rg[p[1]],p[2])
+                    continue
+                end
+                push!(p, s)
+                println("axons: $s $p")
+            end
+        end
+    end
 end
 
 
+
 sgm = readsgm("sgm.h5")
-new_rg = read_rg("new_rg.txt")
-println("size of rg: $(length(keys(new_rg)))")
 @time rg_volume, d_sizes = process_volume(sgm.segmentation)
 println("$(length(keys(d_sizes)))")
-segs = agglomerate(sgm)
+segs, pd = agglomerate(sgm)
+new_rg = read_rg("new_rg_2.txt", pd)
+println("size of rg: $(length(keys(new_rg)))")
 
 l_segs = []
 
 for k in keys(segs)
-    push!(l_segs, [k,length(segs[k]),sum_vol(collect(segs[k]), d_sizes)])
+    push!(l_segs, [k,length(segs[k]),sum_vol(segs[k], d_sizes)])
 end
 
 #sort!(l_segs, by=x->x[3]/x[2],rev=true)
 
-rg_faces, face_segs, d_faceareas = process_faces(sgm.segmentation)
-println("size of the rg: $(length(keys(rg_faces)))")
-checks = []
+@time rg_faces, face_segs, d_faceareas = process_faces(sgm.segmentation)
+println("size of rg: $(length(keys(rg_faces)))")
+axons = Dict{Int, Set{Int}}()
+long_axons = Dict{Int, Set{Int}}()
+free_ends = Set{Int}()
+small_pieces = Set{Int}()
 for l in l_segs
     if l[3] < 10000000 && l[2] > 5
-        ccsz = connected(intersect(keys(rg_faces), segs[l[1]]), rg_faces, d_faceareas)
-        faces = faces_touched(segs[l[1]], face_segs)
+        #ccsz = connected(intersect(keys(rg_faces), segs[l[1]]), rg_faces, d_faceareas)
+        #faces = faces_touched(segs[l[1]], face_segs)
         axon_freeends = check_segment(segs[l[1]], rg_volume, d_sizes, d_faceareas)
         if !isempty(axon_freeends) && length(axon_freeends) < 10
-            println("segid: $(l[1]), parts: $(l[2]), size: $(l[3]), free_ends: $(length(axon_freeends))")
-            push!(checks, [l[1], axon_freeends])
+            #println("segid: $(l[1]), parts: $(l[2]), size: $(l[3]), free_ends: $(length(axon_freeends)) ($(axon_freeends))")
+            #push!(checks, [l[1], axon_freeends])
+            axons[l[1]] = axon_freeends
+            union!(free_ends, axon_freeends)
+            if l[2] > 20
+                long_axons[l[1]] = axon_freeends
+            end
+        end
+    elseif l[2] < 5
+        if isempty(intersect(segs[l[1]], keys(d_faceareas)))
+            push!(small_pieces, l[1])
         end
     end
 end
-println([x[1] for x in checks])
-pairs = []
-for p in keys(new_rg)
-    a_edge = new_rg[p]
-    seg1 = 0
-    seg2 = 0
-    for i in checks
-        if a_edge.v1 in i[2]
-            seg1 = i[1]
-        elseif a_edge.v2 in i[2]
-            seg2 = i[1]
-        end
-    end
-    #if !isempty(seg1) && !isempty(seg2) && isempty(intersect(seg1[2],seg2[2]))
-    if seg1 != 0 && seg2 != 0 && check_edge(a_edge, segs[seg1], segs[seg2])
-        println("$seg1, $seg2")
-        println(a_edge)
-        push!(pairs, seg1)
-        push!(pairs, seg2)
-    end
-end
-println(pairs)
+println("$(length(keys(axons))) axon candidates")
+println("$(length(small_pieces)) small pieces")
+println("$(length(keys(long_axons))) long axon candidates")
+#match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
+match_axons(axons, segs, new_rg, free_ends)
+#println([x[1] for x in checks])
