@@ -27,11 +27,11 @@ function check_edge(edge, seg1, seg2)
     neighboor1 = Set{Int}()
     neighboor2 = Set{Int}()
     if edge.v1 in seg1
-        neighboor1 = rg_volume[edge.v1]
-        neighboor2 = rg_volume[edge.v2]
+        neighboor1 = keys(rg_volume[edge.v1])
+        neighboor2 = keys(rg_volume[edge.v2])
     else
-        neighboor1 = rg_volume[edge.v2]
-        neighboor2 = rg_volume[edge.v1]
+        neighboor1 = keys(rg_volume[edge.v2])
+        neighboor2 = keys(rg_volume[edge.v1])
     end
     #if length(intersect(seg2,neighboor1)) > 1
     #    return false
@@ -61,7 +61,7 @@ end
 function read_rg(fn, pd)
     rg_file = open(fn)
     #rg = Dict{Tuple{Int,Int},atomic_edge}()
-    rg = DefaultDict(Int, Dict{Int, atomic_edge}, ()->Dict{Int, atomic_edge}())
+    rg = DefaultOrderedDict(Int, Dict{Int, atomic_edge}, ()->Dict{Int, atomic_edge}())
     for ln in eachline(rg_file)
         data = split(ln, " ")
         u1 = parse(Int, data[5])
@@ -118,7 +118,7 @@ function check_connectivity(s, segment, rg_volume)
             end
 
             push!(visited,root)
-            for neighboor in rg_volume[root]
+            for neighboor in keys(rg_volume[root])
                 if !(neighboor in visited) && neighboor in segment
                     enqueue!(queue, neighboor)
                 end
@@ -138,7 +138,7 @@ function really_check_freeends(ends, segment, rg_volume, d_sizes, d_faceareas)
         if s in boundary_segs
             continue
         end
-        for neighboor in rg_volume[s]
+        for neighboor in keys(rg_volume[s])
             if neighboor in segment
                 count += 1
                 push!(end_segment, neighboor)
@@ -225,17 +225,24 @@ end
 
 function process_volume(seg)
     rg_file = open("rg_volume.in")
-    rg_volume = DefaultDict(Int,Set{Int}, ()->Set{Int}())
+    rg_volume = DefaultOrderedDict(Int, Dict{Int, atomic_edge}, ()->Dict{Int, atomic_edge}())
     for ln in eachline(rg_file)
         data = split(ln, " ")
-        u1 = parse(Int,data[1])
-        u2 = parse(Int,data[2])
-        push!(rg_volume[u1],u2)
-        push!(rg_volume[u2],u1)
+        u1 = parse(Int, data[5])
+        u2 = parse(Int, data[6])
+        aff = parse(Float64, data[7])
+        area = parse(Int, data[8])
+        s = parse(Float64, data[3])
+        n = parse(Int, data[4])
+        p1 = parse(Int, data[1])
+        p2 = parse(Int, data[2])
+        a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
+        rg_volume[p1][p2] = a_edge
+        rg_volume[p2][p1] = a_edge
     end
     close(rg_file)
     size_file = open("sv_size.in")
-    d_sizes = DefaultDict(Int,Int,()->0)
+    d_sizes = DefaultOrderedDict(Int,Int,()->0)
     for ln in eachline(size_file)
         data = split(ln, " ")
         seg_id = parse(Int, data[1])
@@ -248,8 +255,8 @@ end
 
 function process_faces(seg)
     sz = size(seg)
-    rg_faces = DefaultDict(Int,Set{Int}, ()->Set{Int}())
-    d_faceareas = DefaultDict(Int,Int,0)
+    rg_faces = DefaultOrderedDict(Int,Set{Int}, ()->Set{Int}())
+    d_faceareas = DefaultOrderedDict(Int,Int,0)
 
     face_segs = Dict("xy-"=>Set{Int}(), "xy+"=>Set{Int}(), "xz-"=>Set{Int}(), "xz+"=>Set{Int}(), "yz-"=>Set{Int}(), "yz+"=>Set{Int}())
 
@@ -374,12 +381,15 @@ function match_axons(axons, segs, new_rg, free_ends)
                 continue
             end
             push!(visited, a_edge)
-            if !(a_edge.v1 in free_ends) || !(a_edge.v2 in free_ends)
+            if !(a_edge.v1 in free_ends)
+                continue
+            end
+            if !(a_edge.v2 in free_ends)
                 continue
             end
             if check_edge(a_edge, segs[a], segs[b])
                 p = minmax(a,b)
-                #println("$(p[1]), $(p[2])")
+                println("$(p[1]), $(p[2])")
                 println(a_edge)
                 edges[a_edge] = 0.199995
                 push!(pairs, a)
@@ -515,8 +525,8 @@ println("$(length(keys(axons))) axon candidates")
 println("$(length(small_pieces)) small pieces")
 println("$(length(keys(long_axons))) long axon candidates")
 println("$(length(really_long_axons)) really long axon candidates")
-#matches = match_axons(axons, segs, new_rg, free_ends)
-matches = match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
+matches = match_axons(axons, segs, new_rg, free_ends)
+#matches = match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
 #matches = match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
 visited = Set{atomic_edge}()
 for edge in keys(matches)
