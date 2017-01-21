@@ -432,8 +432,8 @@ function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
     return edges
 end
 
-function match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
-    edges = Dict{atomic_edge, Float64}()
+function match_long_axons(small_pieces, long_axons, new_rg)
+    edges = OrderedDict{atomic_edge, Float64}()
     pairs = []
     for s in small_pieces
         neighboors = keys(new_rg[s])
@@ -442,10 +442,10 @@ function match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
         for c in candidates
             a_edge = new_rg[s][c]
             free_end = a_edge.v1
-            if !(free_end in free_ends)
+            if !(free_end in long_axons[c])
                 free_end = a_edge.v2
             end
-            if !(free_end in free_ends) || !(free_end in segs[c])
+            if !(free_end in long_axons[c])
                 continue
             end
             push!(axons, [c, free_end, a_edge])
