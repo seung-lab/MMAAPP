@@ -394,7 +394,7 @@ end
 function match_axons(axons, segs, new_rg, free_ends)
     visited = Set{atomic_edge}()
     pairs = Int[]
-    edges = Dict{atomic_edge, Float64}()
+    edges = OrderedDict{atomic_edge, Float64}()
     for a in keys(axons)
         matches = intersect(keys(new_rg[a]),keys(axons))
         #println("test: $a")
@@ -428,7 +428,7 @@ function match_axons(axons, segs, new_rg, free_ends)
 end
 
 function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
-    edges = Dict{atomic_edge, Float64}()
+    edges = OrderedDict{atomic_edge, Float64}()
     pairs = []
     for l in really_long_axons
         neighboors = keys(new_rg[l])
