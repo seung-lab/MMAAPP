@@ -458,6 +458,73 @@ function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
     return edges
 end
 
+function match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faceareas)
+    edges = OrderedDict{atomic_edge, Float64}()
+    pairs = []
+    for s in keys(d_sizes)
+        if s in keys(d_faceareas)
+            continue
+        end
+        if d_sizes[s] > 10000
+            continue
+        end
+        ends = intersect(keys(rg_volume[s]), keys(free_ends))
+        if length(ends) > 1
+            for p in combinations(ends,2)
+                axon1 = free_ends[p[1]]
+                axon2 = free_ends[p[2]]
+                if axon1 in keys(new_rg[axon2]) || !(axon1 in keys(long_axons)) || !(axon2 in keys(long_axons)) || axon1 == axon2
+                    continue
+                end
+                freeend_dominate = true
+                for q in p
+                    freeend_area = rg_volume[s][q].area
+                    if length(intersect(segs[free_ends[q]], keys(rg_volume[s]))) > 1
+                        freeend_dominate = false
+                        break
+                    end
+                    if !freeend_dominate
+                        break
+                    end
+                    touched_axons = intersect(keys(new_rg[free_ends[q]]), keys(long_axons))
+                    #println("$q, $(free_ends[q])")
+                    better_option = false
+                    for r in touched_axons
+                        edge = new_rg[free_ends[q]][r]
+                        if (edge.v1 in long_axons[free_ends[q]] && edge.v2 in long_axons[r]) || (edge.v2 in long_axons[free_ends[q]] && edge.v1 in long_axons[r])
+                            if edge.sum/edge.num > 0.1
+                                better_option = true
+                                #break
+                            end
+                        end
+                    end
+                    if better_option
+                        break
+                    end
+                    #for r in intersect(segs[free_ends[q]], keys(rg_volume[s]))
+                    #    q_area = rg_volume[s][r].area
+                    #    if q_area > freeend_area
+                    #        freeend_dominate = false
+                    #        break
+                    #    end
+                    #end
+                end
+                if !freeend_dominate
+                    continue
+                end
+                #println("$axon1, $axon2")
+                push!(pairs, axon1)
+                push!(pairs, axon2)
+                #edge2 = rg_volume[s][p[2]]
+                a_edge = atomic_edge(axon1, axon2, 0.199995, 1, p[1], p[2], 0.199995, 1)
+                edges[a_edge] = -1.0
+            end
+        end
+    end
+    println(pairs)
+    return edges
+end
+
 function match_long_axons(small_pieces, long_axons, new_rg)
     edges = OrderedDict{atomic_edge, Float64}()
     pairs = []
