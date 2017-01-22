@@ -391,11 +391,15 @@ function agglomerate(sgm)
     return segs, pd
 end
 
-function match_axons(axons, segs, new_rg, free_ends, considered)
+function match_axons(axons, segs, new_rg, free_ends, considered, is_strict)
     visited = Set{atomic_edge}()
     pairs = Int[]
     edges = OrderedDict{atomic_edge, Float64}()
     processed = Set{Int}()
+    threshold = 0.199985
+    if is_strict
+        threshold = 0.199995
+    end
     for a in keys(axons)
         matches = intersect(keys(new_rg[a]),keys(axons))
         #println("test: $a")
@@ -412,13 +416,14 @@ function match_axons(axons, segs, new_rg, free_ends, considered)
             if !(a_edge.v2 in keys(free_ends)) || a_edge.v2 in considered
                 continue
             end
+            if is_strict && a_edge.sum/a_edge.num < 0.1
                 continue
             end
             if check_edge(a_edge, segs[a], segs[b])
                 p = minmax(a,b)
                 println("$(p[1]), $(p[2])")
                 println(a_edge)
-                edges[a_edge] = 0.199995
+                edges[a_edge] = threshold
                 push!(processed, a_edge.v1)
                 push!(processed, a_edge.v2)
                 push!(pairs, a)
