@@ -23,6 +23,25 @@ function print_edge(edge, mean_aff)
     println("$(edge.p1) $(edge.p2) $(sum_aff) $(area) $(edge.v1) $(edge.v2) $(edge.aff) $(edge.area)")
 end
 
+function update_new_rg(new_rg, matches)
+    visited = Set{atomic_edge}()
+    for edge in keys(matches)
+        print_edge(edge, matches[edge])
+        push!(visited, edge)
+    end
+    for a in keys(new_rg)
+        for b in keys(new_rg[a])
+            edge = new_rg[a][b]
+            if edge in visited
+                continue
+            else
+                print_edge(edge, -1)
+                push!(visited, edge)
+            end
+        end
+    end
+end
+
 function check_edge(edge, seg1, seg2)
     neighboor1 = Set{Int}()
     neighboor2 = Set{Int}()
@@ -528,20 +547,6 @@ println("$(length(really_long_axons)) really long axon candidates")
 matches = match_axons(axons, segs, new_rg, free_ends)
 #matches = match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
 #matches = match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
-visited = Set{atomic_edge}()
-for edge in keys(matches)
-    print_edge(edge, matches[edge])
-    push!(visited, edge)
-end
-for a in keys(new_rg)
-    for b in keys(new_rg[a])
-        edge = new_rg[a][b]
-        if edge in visited
-            continue
-        else
-            print_edge(edge, -1)
-            push!(visited, edge)
-        end
-    end
-end
+#matches = match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faceareas)
+update_new_rg(new_rg, merge(matches,matches2))
 #println([x[1] for x in checks])
