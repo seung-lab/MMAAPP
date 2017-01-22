@@ -405,10 +405,12 @@ function match_axons(axons, segs, new_rg, free_ends)
                 continue
             end
             push!(visited, a_edge)
-            if !(a_edge.v1 in free_ends)
+            if !(a_edge.v1 in keys(free_ends))
                 continue
             end
-            if !(a_edge.v2 in free_ends)
+            if !(a_edge.v2 in keys(free_ends))
+                continue
+            end
                 continue
             end
             if check_edge(a_edge, segs[a], segs[b])
@@ -435,13 +437,13 @@ function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
         axons = []
         for c in candidates
             a_edge = new_rg[l][c]
-            if (a_edge.v1 in free_ends) && (a_edge.v2 in free_ends)
+            if (a_edge.v1 in keys(free_ends)) && (a_edge.v2 in keys(free_ends))
                 continue
             end
-            if (a_edge.v1 in segs[c]) && !(a_edge.v1 in free_ends)
+            if (a_edge.v1 in segs[c]) && !(a_edge.v1 in long_axons[c])
                 continue
             end
-            if (a_edge.v2 in segs[c]) && !(a_edge.v2 in free_ends)
+            if (a_edge.v2 in segs[c]) && !(a_edge.v2 in long_axons[c])
                 continue
             end
             if a_edge.sum/a_edge.num > 0.1
@@ -518,7 +520,7 @@ end
 @time rg_faces, face_segs, d_faceareas = process_faces(sgm.segmentation)
 println("size of rg: $(length(keys(rg_faces)))")
 axons = Dict{Int, Set{Int}}()
-free_ends = Set{Int}()
+free_ends = Dict{Int, Int}()
 small_pieces = Set{Int}()
 long_axons = Dict{Int, Set{Int}}()
 really_long_axons = Set{Int}()
@@ -531,7 +533,9 @@ for l in l_segs
         if !isempty(axon_freeends) && length(axon_freeends) < 10
             #push!(checks, [l[1], axon_freeends])
             axons[l[1]] = axon_freeends
-            union!(free_ends, axon_freeends)
+            for s in axon_freeends
+                free_ends[s] = l[1]
+            end
             if l[2] > 20
                 long_axons[l[1]] = axon_freeends
             end
