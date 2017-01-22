@@ -391,10 +391,11 @@ function agglomerate(sgm)
     return segs, pd
 end
 
-function match_axons(axons, segs, new_rg, free_ends)
+function match_axons(axons, segs, new_rg, free_ends, considered)
     visited = Set{atomic_edge}()
     pairs = Int[]
     edges = OrderedDict{atomic_edge, Float64}()
+    processed = Set{Int}()
     for a in keys(axons)
         matches = intersect(keys(new_rg[a]),keys(axons))
         #println("test: $a")
@@ -405,10 +406,10 @@ function match_axons(axons, segs, new_rg, free_ends)
                 continue
             end
             push!(visited, a_edge)
-            if !(a_edge.v1 in keys(free_ends))
+            if !(a_edge.v1 in keys(free_ends)) || a_edge.v1 in considered
                 continue
             end
-            if !(a_edge.v2 in keys(free_ends))
+            if !(a_edge.v2 in keys(free_ends)) || a_edge.v2 in considered
                 continue
             end
                 continue
@@ -418,13 +419,15 @@ function match_axons(axons, segs, new_rg, free_ends)
                 println("$(p[1]), $(p[2])")
                 println(a_edge)
                 edges[a_edge] = 0.199995
+                push!(processed, a_edge.v1)
+                push!(processed, a_edge.v2)
                 push!(pairs, a)
                 push!(pairs, b)
             end
         end
     end
     println(pairs)
-    return edges
+    return edges, processed
 end
 
 function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
@@ -620,8 +623,9 @@ println("$(length(keys(axons))) axon candidates")
 println("$(length(small_pieces)) small pieces")
 println("$(length(keys(long_axons))) long axon candidates")
 println("$(length(really_long_axons)) really long axon candidates")
-matches = match_axons(axons, segs, new_rg, free_ends)
-#matches = match_long_axons(small_pieces, long_axons, segs, new_rg, free_ends)
+matches, considered = match_axons(axons, segs, new_rg, free_ends, Set{Int}(), true)
+matches2, discard = match_axons(axons, segs, new_rg, free_ends, considered, false)
+#matches = match_long_axons(small_pieces, long_axons, new_rg)
 #matches = match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
 #matches = match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faceareas)
 update_new_rg(new_rg, merge(matches,matches2))
