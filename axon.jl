@@ -391,10 +391,46 @@ function agglomerate(sgm)
     return segs, pd
 end
 
+function merge_edges(merge_graph, threshold, new_rg)
+    edges = OrderedDict{atomic_edge, Float64}()
+    visited = Set{Int}()
+    for p in keys(merge_graph)
+        axons_group = Int[]
+        if p in visited
+            continue
+        end
+        queue = Queue(Int)
+        enqueue!(queue, p)
+        push!(axons_group, p)
+
+        while length(queue) > 0
+            root = dequeue!(queue)
+            if root in visited
+                continue
+            end
+
+            push!(visited,root)
+            for neighboor in merge_graph[root]
+                if !(neighboor in visited)
+                    enqueue!(queue, neighboor)
+                    push!(axons_group, neighboor)
+                end
+            end
+        end
+        for q in combinations(axons_group,2)
+            if haskey(new_rg[q[1]], q[2])
+                edges[new_rg[q[1]][q[2]]] = threshold
+            end
+        end
+    end
+    return edges
+end
+
+
 function match_axons(axons, segs, new_rg, free_ends, considered, is_strict)
     visited = Set{atomic_edge}()
     pairs = Int[]
-    edges = OrderedDict{atomic_edge, Float64}()
+    merge_graph = DefaultOrderedDict(Int, Set{Int}, ()->Set{Int}())
     processed = Set{Int}()
     threshold = 0.199985
     if is_strict
@@ -423,15 +459,18 @@ function match_axons(axons, segs, new_rg, free_ends, considered, is_strict)
                 p = minmax(a,b)
                 println("$(p[1]), $(p[2])")
                 println(a_edge)
-                edges[a_edge] = threshold
                 push!(processed, a_edge.v1)
                 push!(processed, a_edge.v2)
                 push!(pairs, a)
                 push!(pairs, b)
+                push!(merge_graph[a],b)
+                push!(merge_graph[b],a)
             end
         end
     end
+
     println(pairs)
+    edges = merge_edges(merge_graph, threshold, new_rg)
     return edges, processed
 end
 
