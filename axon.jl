@@ -151,23 +151,28 @@ end
 function really_check_freeends(ends, segment, rg_volume, d_sizes, d_faceareas)
     free_ends = Set{Int}()
     boundary_segs = keys(d_faceareas)
+    avg_vol = sum_vol(segment, d_sizes)/length(segment)
     for s in ends
         end_segment = Set{Int}()
-        count = 0
+        near_boundary = false
         if s in boundary_segs
             continue
         end
+        if d_sizes[s] > 5*avg_vol
+            continue
+        end
+        neighboor2 = Set{Int}()
         for neighboor in keys(rg_volume[s])
             if neighboor in segment
-                count += 1
+                union!(neighboor2,intersect(keys(rg_volume[neighboor]),segment))
                 push!(end_segment, neighboor)
                 if neighboor in boundary_segs
-                    count = 100
+                    near_boundary = true
                     break
                 end
             end
         end
-        if count > 2
+        if near_boundary || length(neighboor2) > 7
             continue
         end
         push!(end_segment, s)
