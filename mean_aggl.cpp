@@ -265,10 +265,10 @@ int main()
     }
 
     auto res = agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
-                           mean_edge_limits>(rg, mean_edge(66, 1), v);
+                           mean_edge_limits>(rg, mean_edge(0.1, 1), v);
 
-    for (auto& e : res)
-    {
-        std::cout << e << "\n";
-    }
+    //for (auto& e : res)
+    //{
+    //    std::cout << e << "\n";
+    //}
 }
