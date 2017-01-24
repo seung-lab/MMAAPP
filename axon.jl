@@ -427,10 +427,9 @@ function merge_edges(merge_graph, threshold, new_rg)
 end
 
 
-function match_axons(axons, segs, new_rg, free_ends, considered, is_strict)
+function match_axons(axons, segs, new_rg, free_ends, considered, is_strict, merge_graph)
     visited = Set{atomic_edge}()
     pairs = Int[]
-    merge_graph = DefaultOrderedDict(Int, Set{Int}, ()->Set{Int}())
     processed = Set{Int}()
     threshold = 0.199985
     if is_strict
@@ -470,8 +469,7 @@ function match_axons(axons, segs, new_rg, free_ends, considered, is_strict)
     end
 
     println(pairs)
-    edges = merge_edges(merge_graph, threshold, new_rg)
-    return edges, processed
+    return processed
 end
 
 function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
@@ -667,8 +665,14 @@ println("$(length(keys(axons))) axon candidates")
 println("$(length(small_pieces)) small pieces")
 println("$(length(keys(long_axons))) long axon candidates")
 println("$(length(really_long_axons)) really long axon candidates")
-matches, considered = match_axons(axons, segs, new_rg, free_ends, Set{Int}(), true)
-matches2, discard = match_axons(axons, segs, new_rg, free_ends, considered, false)
+
+merge_graph = DefaultOrderedDict(Int, Set{Int}, ()->Set{Int}())
+merge_graph2 = DefaultOrderedDict(Int, Set{Int}, ()->Set{Int}())
+
+considered = match_axons(axons, segs, new_rg, free_ends, Set{Int}(), true, merge_graph)
+matches = merge_edges(merge_graph, 0.199995, new_rg)
+discard = match_axons(axons, segs, new_rg, free_ends, considered, false, merge_graph2)
+matches2 = merge_edges(merge_graph2, 0.199985, new_rg)
 #matches = match_long_axons(small_pieces, long_axons, new_rg)
 #matches = match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
 #matches = match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faceareas)
