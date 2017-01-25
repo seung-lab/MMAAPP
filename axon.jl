@@ -431,10 +431,6 @@ function match_axons(axons, segs, new_rg, free_ends, considered, is_strict, merg
     visited = Set{atomic_edge}()
     pairs = Int[]
     processed = Set{Int}()
-    threshold = 0.199985
-    if is_strict
-        threshold = 0.199995
-    end
     for a in keys(axons)
         matches = intersect(keys(new_rg[a]),keys(axons))
         #println("test: $a")
