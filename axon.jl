@@ -64,7 +64,7 @@ function check_edge(edge, seg1, seg2)
     len1 = length(intersect(seg2,neighboor1))
     len2 = length(intersect(seg1,neighboor2))
     if len1 == 1 && len2 == 1
-        if edge.num > 300 && edge.sum/edge.num < 0.15
+        if edge.num > 300 && edge.sum/edge.num < 0.10
             return false
         end
     elseif len1 > 1 && len2 > 1
