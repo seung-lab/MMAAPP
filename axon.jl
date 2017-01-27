@@ -247,7 +247,7 @@ function connected(subset, rg, facesizes)
     return ccsz
 end
 
-function process_volume(seg)
+function process_volume()
     rg_file = open("rg_volume.in")
     rg_volume = DefaultOrderedDict(Int, Dict{Int, atomic_edge}, ()->Dict{Int, atomic_edge}())
     for ln in eachline(rg_file)
@@ -265,6 +265,10 @@ function process_volume(seg)
         rg_volume[p2][p1] = a_edge
     end
     close(rg_file)
+    return rg_volume
+end
+
+function process_size()
     size_file = open("sv_size.in")
     d_sizes = DefaultOrderedDict(Int,Int,()->0)
     for ln in eachline(size_file)
@@ -274,7 +278,7 @@ function process_volume(seg)
         d_sizes[seg_id] = sz
     end
     close(size_file)
-    return rg_volume, d_sizes
+    return d_sizes
 end
 
 function process_faces(seg)
@@ -601,7 +605,8 @@ end
 
 
 sgm = readsgm("sgm.h5")
-@time rg_volume, d_sizes = process_volume(sgm.segmentation)
+@time rg_volume = process_volume()
+@time d_sizes = process_size()
 println("$(length(keys(d_sizes)))")
 segs, pd = agglomerate(sgm)
 new_rg = read_rg("new_rg_2.txt", pd)
