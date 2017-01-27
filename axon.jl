@@ -100,6 +100,13 @@ function read_rg(fn, pd)
     return rg
 end
 
+function sum_sem(clst, d_sem)
+    total_sem = Float32[0,0,0]
+    for c in clst
+        total_sem += d_sem[c]
+    end
+    return total_sem
+end
 
 function sum_vol(clst, d_sizes)
     total_vol = 0
@@ -280,6 +287,21 @@ function process_size()
     close(size_file)
     return d_sizes
 end
+
+function process_semantic()
+    sem_file = open("sem.in")
+    d_sem = DefaultOrderedDict(Int,Array{Float32,1}, ()-> Float32[])
+    for ln in eachline(sem_file)
+        data = split(ln, " ")
+        seg_id = parse(Int, data[1])
+        axon = parse(Float32,data[2])
+        dend = parse(Float32,data[3])
+        glial = parse(Float32,data[4])
+        d_sem[seg_id]=[axon,dend,glial]
+    end
+    return d_sem
+end
+
 
 function process_faces(seg)
     sz = size(seg)
@@ -607,6 +629,7 @@ end
 sgm = readsgm("sgm.h5")
 @time rg_volume = process_volume()
 @time d_sizes = process_size()
+@time d_sem = process_semantic()
 println("$(length(keys(d_sizes)))")
 segs, pd = agglomerate(sgm)
 new_rg = read_rg("new_rg_2.txt", pd)
@@ -615,7 +638,7 @@ println("size of rg: $(length(keys(new_rg)))")
 l_segs = []
 
 for k in keys(segs)
-    push!(l_segs, [k,length(segs[k]),sum_vol(segs[k], d_sizes)])
+    push!(l_segs, [k,length(segs[k]),sum_vol(segs[k], d_sizes),sum_sem(segs[k], d_sem)])
 end
 
 #sort!(l_segs, by=x->x[3]/x[2],rev=true)
@@ -627,12 +650,17 @@ free_ends = Dict{Int, Int}()
 small_pieces = Set{Int}()
 long_axons = Dict{Int, Set{Int}}()
 really_long_axons = Set{Int}()
+#glial_segs=Set{Int}()
 for l in l_segs
     if l[3] < 10000000 && l[2] > 5
         #ccsz = connected(intersect(keys(rg_faces), segs[l[1]]), rg_faces, d_faceareas)
         #faces = faces_touched(segs[l[1]], face_segs)
+        if l[4][3] > l[4][1] && l[4][3] > l[4][2]
+            #push!(glial_segs, l[1])
+            continue
+        end
         seg_type, axon_freeends = check_segment(segs[l[1]], rg_volume, d_sizes, d_faceareas)
-        #println("segid: $(l[1]), parts: $(l[2]), size: $(l[3]), free_ends: $(length(axon_freeends)) ($(axon_freeends))")
+        #println("segid: $(l[1]), parts: $(l[2]), size: $(l[3]), semantic: $(l[4]), free_ends: $(length(axon_freeends)) ($(axon_freeends))")
         if !isempty(axon_freeends) && length(axon_freeends) < 10
             #push!(checks, [l[1], axon_freeends])
             axons[l[1]] = axon_freeends
@@ -647,11 +675,16 @@ for l in l_segs
             push!(really_long_axons, l[1])
         end
     elseif l[2] < 5
+        if l[4][3] > l[4][1] && l[4][3] > l[4][2]
+            #push!(glial_segs, l[1])
+            continue
+        end
         if isempty(intersect(segs[l[1]], keys(d_faceareas)))
             push!(small_pieces, l[1])
         end
     end
 end
+#println(glial_segs)
 println("$(length(keys(axons))) axon candidates")
 println("$(length(small_pieces)) small pieces")
 println("$(length(keys(long_axons))) long axon candidates")
