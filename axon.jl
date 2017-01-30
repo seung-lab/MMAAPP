@@ -494,9 +494,9 @@ function match_axons(axons, segs, new_rg, free_ends, considered, is_strict, merg
     return processed
 end
 
-function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
-    edges = OrderedDict{atomic_edge, Float64}()
+function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends, considered, merge_graph)
     pairs = []
+    processed = Set{Int}()
     for l in really_long_axons
         neighboors = keys(new_rg[l])
         #candidates = intersect(neighboors, really_long_axons)
@@ -505,6 +505,9 @@ function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
         for c in candidates
             a_edge = new_rg[l][c]
             if (a_edge.v1 in keys(free_ends)) && (a_edge.v2 in keys(free_ends))
+                continue
+            end
+            if (a_edge.v1 in considered) || (a_edge.v2 in considered)
                 continue
             end
             if (a_edge.v1 in segs[c]) && !(a_edge.v1 in long_axons[c])
@@ -517,12 +520,14 @@ function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
                 println("$l, $c")
                 push!(pairs,l)
                 push!(pairs,c)
-                edges[a_edge] = 0.199995
+                push!(merge_graph[l],c)
+                push!(merge_graph[c],l)
+                push!(processed, c)
             end
         end
     end
     println(pairs)
-    return edges
+    return processed
 end
 
 function match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faceareas, considered, merge_graph)
@@ -582,9 +587,9 @@ function match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_facea
     return processed
 end
 
-function match_long_axons(small_pieces, long_axons, new_rg)
-    edges = OrderedDict{atomic_edge, Float64}()
-    pairs = []
+function match_long_axons(small_pieces, long_axons, new_rg, considered, is_strict, merge_graph)
+    processed = Set{Int}()
+    pairs = Set{Int}()
     for s in small_pieces
         neighboors = keys(new_rg[s])
         candidates = intersect(neighboors, keys(long_axons))
@@ -598,30 +603,43 @@ function match_long_axons(small_pieces, long_axons, new_rg)
             if !(free_end in long_axons[c])
                 continue
             end
+            if free_end in considered
+                continue
+            end
             push!(axons, [c, free_end, a_edge])
         end
         if length(axons) > 1
-            push!(pairs, s)
             for p in combinations(axons,2)
                 if haskey(new_rg[p[1][1]],p[2][1])
                     continue
                 end
-                push!(pairs, p[1][1])
-                push!(pairs, p[2][1])
-                a_edge = atomic_edge(p[1][1],p[2][1],0.199995,1,p[1][2],p[2][2],0.199995,1)
-                edges[a_edge] = -1.0
-                edges[p[1][3]] = 0.199985
-                edges[p[2][3]] = 0.199985
-                if p[1][3].sum/p[1][3].num > 0.1 || p[2][3].sum/p[2][3].num > 0.1
-                    edges[p[1][3]] = 0.199995
-                    edges[p[2][3]] = 0.199995
+                if is_strict && p[1][3].sum/p[1][3].num > 0.1 && p[2][3].sum/p[2][3].num > 0.1
+                    push!(pairs, s)
+                    push!(pairs, p[1][1])
+                    push!(pairs, p[2][1])
+                    push!(merge_graph[s],p[1][1])
+                    push!(merge_graph[s],p[2][1])
+                    push!(merge_graph[p[1][1]], s)
+                    push!(merge_graph[p[2][1]], s)
+                    push!(processed, p[1][2])
+                    push!(processed, p[2][2])
+                elseif !is_strict && (p[1][3].sum/p[1][3].num > 0.1 || p[2][3].sum/p[2][3].num > 0.1)
+                    push!(pairs, s)
+                    push!(pairs, p[1][1])
+                    push!(pairs, p[2][1])
+                    push!(merge_graph[s],p[1][1])
+                    push!(merge_graph[s],p[2][1])
+                    push!(merge_graph[p[1][1]], s)
+                    push!(merge_graph[p[2][1]], s)
+                    push!(processed, p[1][2])
+                    push!(processed, p[2][2])
                 end
                 println("axons: $s $p")
             end
         end
     end
     println(pairs)
-    return edges
+    return processed
 end
 
 
