@@ -207,6 +207,20 @@ function really_check_freeends(ends, segment, rg_volume, d_sizes, d_faceareas)
     return free_ends
 end
 
+function check_dend(segment, rg_volume, d_sizes)
+    total_vol = sum_vol(segment, d_sizes)
+    if total_vol < 1000000
+        return false
+    end
+    for s in segment
+        cc = check_connectivity(Set{Int}(s), segment, rg_volume)
+        if (cc > 2 && d_sizes[s] > 0.5*total_vol)
+            return true
+        end
+    end
+    return false
+end
+
 function check_segment(segment, rg_volume, d_sizes, d_faceareas)
     free_ends = Set{Int}()
     count = 0
@@ -662,6 +676,73 @@ function match_long_axons(small_pieces, long_axons, new_rg, considered, is_stric
     return processed
 end
 
+function process_edge(set_a, set_b, rg_volume)
+    for a in set_a
+        for b in intersect(keys(rg_volume[a]),set_b)
+            edge = rg_volume[a][b]
+            if edge.num > 1000
+                continue
+            end
+            if edge.aff/edge.area > 0.5 || (edge.aff/edge.area > agg_threshold && 50 < edge.num < 300)
+                println("process: $(length(set_a)), $(length(set_b))")
+                println("atomic edge: $edge")
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function process_rg(new_rg, segs, rg_volume, d_size, considered, merge_graph)
+    visited = Set{atomic_edge}()
+    dend_candidates = Set{Int}()
+    spine_candidates = Set{Int}()
+    queue = Queue(Int)
+    for a in keys(segs)
+        if check_dend(segs[a], rg_volume, d_size)
+            enqueue!(queue, a)
+        end
+    end
+    while length(queue) > 0
+        a = dequeue!(queue)
+        for b in keys(new_rg[a])
+            if haskey(segs,b) && (length(segs[b]) > 20 || sum_vol(segs[b], d_size) > 1000000)
+                continue
+            #elseif !haskey(segs,b) && d_size[b] < 5000
+            #    continue
+            end
+            if a in considered || b in considered
+                continue
+            end
+            edge = new_rg[a][b]
+            if edge in visited
+                continue
+            elseif edge.sum == edge.aff
+                continue
+            end
+            push!(visited, edge)
+            set_a = Set([a])
+            set_b = Set([b])
+            if haskey(segs,a)
+                set_a = segs[a]
+            end
+            if haskey(segs,b)
+                set_b = segs[b]
+            end
+            if process_edge(set_a, set_b, rg_volume) && !haskey(merge_graph,b)
+                push!(dend_candidates,a)
+                push!(spine_candidates,b)
+                push!(merge_graph[a],b)
+                push!(merge_graph[b],a)
+                enqueue!(queue,b)
+            end
+        end
+    end
+    println("dend candidates:")
+    println("$dend_candidates, $(length(spine_candidates))")
+    return spine_candidates
+end
+
 
 
 sgm = readsgm("sgm.h5")
@@ -734,6 +815,8 @@ merge_graph2 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 merge_graph3 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 considered = match_long_axons(small_pieces, long_axons, new_rg, Set{Int}(), true, merge_graph)
 union!(considered, match_axons(axons, segs, new_rg, free_ends, Set{Int}(), true, merge_graph))
+newly_considered = process_rg(new_rg, segs, rg_volume, d_sizes, considered, merge_graph)
+union!(considered,newly_considered)
 matches = merge_edges(merge_graph, th_tier1, new_rg)
 
 discard = match_long_axons(small_pieces, long_axons, new_rg, considered, false, merge_graph2)
