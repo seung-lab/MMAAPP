@@ -87,7 +87,7 @@ end
 function read_rg(fn, pd)
     rg_file = open(fn)
     #rg = Dict{Tuple{Int,Int},atomic_edge}()
-    rg = DefaultOrderedDict(Int, Dict{Int, atomic_edge}, ()->Dict{Int, atomic_edge}())
+    rg = DefaultOrderedDict{Int, Dict{Int, atomic_edge}}(()->Dict{Int, atomic_edge}())
     for ln in eachline(rg_file)
         data = split(ln, " ")
         u1 = parse(Int, data[5])
@@ -263,7 +263,7 @@ end
 
 function process_volume()
     rg_file = open("rg_volume.in")
-    rg_volume = DefaultOrderedDict(Int, Dict{Int, atomic_edge}, ()->Dict{Int, atomic_edge}())
+    rg_volume = DefaultOrderedDict{Int, Dict{Int, atomic_edge}}(()->Dict{Int, atomic_edge}())
     num_seg = 0
     for ln in eachline(rg_file)
         data = split(ln, " ")
@@ -289,7 +289,7 @@ end
 
 function process_size()
     size_file = open("sv_size.in")
-    d_sizes = DefaultOrderedDict(Int,Int,()->0)
+    d_sizes = DefaultOrderedDict{Int,Int}(()->0)
     for ln in eachline(size_file)
         data = split(ln, " ")
         seg_id = parse(Int, data[1])
@@ -317,8 +317,8 @@ end
 
 function process_faces(seg)
     sz = size(seg)
-    rg_faces = DefaultOrderedDict(Int,Set{Int}, ()->Set{Int}())
-    d_faceareas = DefaultOrderedDict(Int,Int,0)
+    rg_faces = DefaultOrderedDict{Int,Set{Int}}(()->Set{Int}())
+    d_faceareas = DefaultOrderedDict{Int,Int}(0)
 
     face_segs = Dict("xy-"=>Set{Int}(), "xy+"=>Set{Int}(), "xz-"=>Set{Int}(), "xz+"=>Set{Int}(), "yz-"=>Set{Int}(), "yz+"=>Set{Int}())
 
