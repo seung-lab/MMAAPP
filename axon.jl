@@ -108,8 +108,8 @@ function read_rg(fn, pd)
         p1 = parse(Int, data[1])
         p2 = parse(Int, data[2])
         a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
-        p1 = get(pd, u1, u1)
-        p2 = get(pd, u2, u2)
+        #p1 = get(pd, u1, u1)
+        #p2 = get(pd, u2, u2)
         rg[p1][p2] = a_edge
         rg[p2][p1] = a_edge
     end
