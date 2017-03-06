@@ -25,6 +25,8 @@ function print_edge(rg_out, edge, mean_aff)
     sum_aff = edge.sum
     if mean_aff > 0
         sum_aff = area*mean_aff
+    else
+        sum_aff *= 0.9995
     end
     p = minmax(edge.p1, edge.p2)
     push!(rg_out,"$(p[1]) $(p[2]) $(sum_aff) $(area) $(edge.v1) $(edge.v2) $(edge.aff) $(edge.area)\n")
