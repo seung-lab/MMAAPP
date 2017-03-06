@@ -25,6 +25,7 @@ function print_edge(rg_out, edge, mean_aff)
 end
 
 function update_new_rg(num_seg, new_rg, matches)
+    f = open("axon.in","w")
     visited = Set{atomic_edge}()
     rg_out = AbstractString[]
     for edge in keys(matches)
@@ -662,7 +663,7 @@ sgm = readsgm("sgm.h5")
 @time d_sem = process_semantic()
 println("$(length(keys(d_sizes)))")
 segs, pd = agglomerate(sgm)
-new_rg = read_rg("new_rg_2.txt", pd)
+new_rg = read_rg("new_rg.in", pd)
 println("size of rg: $(length(keys(new_rg)))")
 
 l_segs = []
