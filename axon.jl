@@ -117,7 +117,7 @@ function read_rg(fn, pd)
 end
 
 function sum_sem(clst, d_sem)
-    total_sem = Float32[0,0,0]
+    total_sem = Float32[0,0,0,0]
     for c in clst
         total_sem += d_sem[c]
     end
@@ -207,9 +207,10 @@ function really_check_freeends(ends, segment, rg_volume, d_sizes, d_faceareas)
     return free_ends
 end
 
-function check_dend(segment, rg_volume, d_sizes)
-    total_vol = sum_vol(segment, d_sizes)
-    if total_vol < 1000000
+function check_dend(segment, rg_volume, d_sizes, l)
+    total_vol = l[3]
+    sem = l[4]
+    if total_vol < 1000000 || sem[2] < sem[1] || sem[2] < 0.5*sem[3]
         return false
     end
     for s in segment
@@ -324,15 +325,16 @@ function process_size()
 end
 
 function process_semantic()
-    sem_file = open("sem.in")
-    d_sem = DefaultOrderedDict(Int,Array{Float32,1}, ()-> Float32[])
+    sem_file = open("sem_volume.in")
+    d_sem = DefaultOrderedDict{Int,Array{Float32,1}}(()-> Float32[])
     for ln in eachline(sem_file)
         data = split(ln, " ")
         seg_id = parse(Int, data[1])
         axon = parse(Float32,data[2])
         dend = parse(Float32,data[3])
         glial = parse(Float32,data[4])
-        d_sem[seg_id]=[axon,dend,glial]
+        psd = parse(Float32,data[5])
+        d_sem[seg_id]=[axon,dend,glial,psd]
     end
     return d_sem
 end
@@ -693,14 +695,14 @@ function process_edge(set_a, set_b, rg_volume)
     return false
 end
 
-function process_rg(new_rg, segs, rg_volume, d_size, considered, merge_graph)
+function process_rg(new_rg, l_segs, segs, rg_volume, d_size, considered, merge_graph)
     visited = Set{atomic_edge}()
     dend_candidates = Set{Int}()
     spine_candidates = Set{Int}()
     queue = Queue(Int)
-    for a in keys(segs)
-        if check_dend(segs[a], rg_volume, d_size)
-            enqueue!(queue, a)
+    for l in l_segs
+        if check_dend(segs[l[1]], rg_volume, d_size, l)
+            enqueue!(queue, l[1])
         end
     end
     while length(queue) > 0
@@ -815,7 +817,7 @@ merge_graph2 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 merge_graph3 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 considered = match_long_axons(small_pieces, long_axons, new_rg, Set{Int}(), true, merge_graph)
 union!(considered, match_axons(axons, segs, new_rg, free_ends, Set{Int}(), true, merge_graph))
-newly_considered = process_rg(new_rg, segs, rg_volume, d_sizes, considered, merge_graph)
+newly_considered = process_rg(new_rg, l_segs, segs, rg_volume, d_sizes, considered, merge_graph)
 union!(considered,newly_considered)
 matches = merge_edges(merge_graph, th_tier1, new_rg)
 
