@@ -14,6 +14,12 @@ type atomic_edge
     area::Int
 end
 
+agg_threshold = parse(Float64, ARGS[1])
+th_tier1 = agg_threshold - 0.000005
+th_tier2 = agg_threshold - 0.000015
+th_tier3 = agg_threshold - 0.000025
+reliable_th = parse(Float64, ARGS[2])
+
 function print_edge(rg_out, edge, mean_aff)
     area = edge.num
     sum_aff = edge.sum
@@ -72,13 +78,13 @@ function check_edge(edge, seg1, seg2)
     len1 = length(intersect(seg2,neighboor1))
     len2 = length(intersect(seg1,neighboor2))
     if len1 == 1 && len2 == 1
-        if edge.num > 300 && edge.sum/edge.num < 0.10
+        if edge.num > 300 && edge.sum/edge.num < reliable_th
             return false
         end
     elseif len1 > 1 && len2 > 1
         return false
     else
-        if edge.sum/edge.num < 0.10
+        if edge.sum/edge.num < reliable_th
             return false
         end
     end
@@ -395,11 +401,10 @@ function process_faces(seg)
 end
 
 function agglomerate(sgm)
-    thd = 0.2
     pd = Dict{UInt32,UInt32}()
     segs = Dict{Int, Set{Int}}()
     for idx in 1:length(sgm.segmentPairAffinities)
-        if sgm.segmentPairAffinities[idx] > thd
+        if sgm.segmentPairAffinities[idx] > agg_threshold
             # the first one is child, the second one is parent
             pd[sgm.segmentPairs[idx,1]] = sgm.segmentPairs[idx,2]
         end
@@ -486,7 +491,7 @@ function match_axons(axons, segs, new_rg, free_ends, considered, is_strict, merg
             if !(a_edge.v2 in keys(free_ends)) || a_edge.v2 in considered
                 continue
             end
-            if is_strict && a_edge.sum/a_edge.num < 0.1
+            if is_strict && a_edge.sum/a_edge.num < reliable_th
                 continue
             end
             if check_edge(a_edge, segs[a], segs[b])
@@ -529,7 +534,7 @@ function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends, 
             if (a_edge.v2 in segs[c]) && !(a_edge.v2 in long_axons[c])
                 continue
             end
-            if a_edge.sum/a_edge.num > 0.1
+            if a_edge.sum/a_edge.num > reliable_th
                 println("$l, $c")
                 push!(pairs,l)
                 push!(pairs,c)
@@ -626,7 +631,7 @@ function match_long_axons(small_pieces, long_axons, new_rg, considered, is_stric
                 if haskey(new_rg[p[1][1]],p[2][1])
                     continue
                 end
-                if is_strict && p[1][3].sum/p[1][3].num > 0.1 && p[2][3].sum/p[2][3].num > 0.1
+                if is_strict && p[1][3].sum/p[1][3].num > reliable_th && p[2][3].sum/p[2][3].num > reliable_th
                     push!(pairs, s)
                     push!(pairs, p[1][1])
                     push!(pairs, p[2][1])
@@ -636,7 +641,7 @@ function match_long_axons(small_pieces, long_axons, new_rg, considered, is_stric
                     push!(merge_graph[p[2][1]], s)
                     push!(processed, p[1][2])
                     push!(processed, p[2][2])
-                elseif !is_strict && (p[1][3].sum/p[1][3].num > 0.1 || p[2][3].sum/p[2][3].num > 0.1)
+                elseif !is_strict && (p[1][3].sum/p[1][3].num > reliable_th || p[2][3].sum/p[2][3].num > reliable_th)
                     push!(pairs, s)
                     push!(pairs, p[1][1])
                     push!(pairs, p[2][1])
@@ -720,16 +725,22 @@ println("$(length(keys(axons))) axon candidates")
 println("$(length(small_pieces)) small pieces")
 println("$(length(keys(long_axons))) long axon candidates")
 println("$(length(really_long_axons)) really long axon candidates")
+#println(keys(axons))
 
-merge_graph = DefaultOrderedDict(Int, Set{Int}, ()->Set{Int}())
-merge_graph2 = DefaultOrderedDict(Int, Set{Int}, ()->Set{Int}())
-merge_graph3 = DefaultOrderedDict(Int, Set{Int}, ()->Set{Int}())
+merge_graph = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
+merge_graph2 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
+merge_graph3 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
+considered = match_long_axons(small_pieces, long_axons, new_rg, Set{Int}(), true, merge_graph)
+union!(considered, match_axons(axons, segs, new_rg, free_ends, Set{Int}(), true, merge_graph))
+matches = merge_edges(merge_graph, th_tier1, new_rg)
 
-considered = match_axons(axons, segs, new_rg, free_ends, Set{Int}(), true, merge_graph)
-matches = merge_edges(merge_graph, 0.199995, new_rg)
-discard = match_axons(axons, segs, new_rg, free_ends, considered, false, merge_graph2)
-discard = match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faceareas, considered, merge_graph3)
-matches2 = merge_edges(merge(merge_graph2, merge_graph3), 0.199985, new_rg)
+discard = match_long_axons(small_pieces, long_axons, new_rg, considered, false, merge_graph2)
+union!(discard, match_axons(axons, segs, new_rg, free_ends, considered, false, merge_graph2))
+matches2 = merge_edges(merge_graph2, th_tier2, new_rg)
+##matches2 = merge_edges(merge_graph2, 0.199985, new_rg)
+#union!(considered,discard)
+#discard = match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faceareas, considered, merge_graph3)
+#matches3 = merge_edges(merge_graph3, th_tier3, new_rg)
 #matches = match_long_axons(small_pieces, long_axons, new_rg)
 update_new_rg(num_seg, new_rg, merge(matches, matches2))
 #println([x[1] for x in checks])
