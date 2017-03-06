@@ -14,19 +14,21 @@ type atomic_edge
     area::Int
 end
 
-function print_edge(edge, mean_aff)
+function print_edge(rg_out, edge, mean_aff)
     area = edge.num
     sum_aff = edge.sum
     if mean_aff > 0
         sum_aff = area*mean_aff
     end
-    println("$(edge.p1) $(edge.p2) $(sum_aff) $(area) $(edge.v1) $(edge.v2) $(edge.aff) $(edge.area)")
+    p = minmax(edge.p1, edge.p2)
+    push!(rg_out,"$(p[1]) $(p[2]) $(sum_aff) $(area) $(edge.v1) $(edge.v2) $(edge.aff) $(edge.area)\n")
 end
 
-function update_new_rg(new_rg, matches)
+function update_new_rg(num_seg, new_rg, matches)
     visited = Set{atomic_edge}()
+    rg_out = AbstractString[]
     for edge in keys(matches)
-        print_edge(edge, matches[edge])
+        print_edge(rg_out, edge, matches[edge])
         push!(visited, edge)
     end
     for a in keys(new_rg)
@@ -35,11 +37,16 @@ function update_new_rg(new_rg, matches)
             if edge in visited
                 continue
             else
-                print_edge(edge, -1)
+                print_edge(rg_out, edge, -1)
                 push!(visited, edge)
             end
         end
     end
+    write(f,"$(num_seg-1) $(num_seg) $(length(rg_out))\n")
+    for str in rg_out
+        write(f, str)
+    end
+    close(f)
 end
 
 function check_edge(edge, seg1, seg2)
@@ -257,8 +264,13 @@ end
 function process_volume()
     rg_file = open("rg_volume.in")
     rg_volume = DefaultOrderedDict(Int, Dict{Int, atomic_edge}, ()->Dict{Int, atomic_edge}())
+    num_seg = 0
     for ln in eachline(rg_file)
         data = split(ln, " ")
+        if length(data) == 3
+            num_seg = parse(Int, data[2])
+            continue
+        end
         u1 = parse(Int, data[5])
         u2 = parse(Int, data[6])
         aff = parse(Float64, data[7])
@@ -272,7 +284,7 @@ function process_volume()
         rg_volume[p2][p1] = a_edge
     end
     close(rg_file)
-    return rg_volume
+    return num_seg,rg_volume
 end
 
 function process_size()
@@ -645,7 +657,7 @@ end
 
 
 sgm = readsgm("sgm.h5")
-@time rg_volume = process_volume()
+@time num_seg, rg_volume = process_volume()
 @time d_sizes = process_size()
 @time d_sem = process_semantic()
 println("$(length(keys(d_sizes)))")
@@ -718,6 +730,5 @@ discard = match_axons(axons, segs, new_rg, free_ends, considered, false, merge_g
 discard = match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faceareas, considered, merge_graph3)
 matches2 = merge_edges(merge(merge_graph2, merge_graph3), 0.199985, new_rg)
 #matches = match_long_axons(small_pieces, long_axons, new_rg)
-#matches = match_branches(really_long_axons, long_axons, segs, new_rg, free_ends)
-update_new_rg(new_rg, merge(matches, matches2))
+update_new_rg(num_seg, new_rg, merge(matches, matches2))
 #println([x[1] for x in checks])
