@@ -18,8 +18,10 @@
 
 #include <boost/heap/binomial_heap.hpp>
 #include <cstddef>
+#include <cstdlib>
 #include <cstdint>
 #include <iostream>
+#include <fstream>
 #include <limits>
 #include <map>
 #include <vector>
@@ -81,6 +83,9 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
         incident[rg[i].v1][rg[i].v0] = &edges[i];
     }
 
+    std::ofstream of;
+    of.open("test_mst.in", std::ofstream::out | std::ofstream::trunc);
+
     while (heap.size() && comp(heap.top()->edge.w, threshold))
     {
         auto e = heap.top();
@@ -100,7 +105,7 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
                 // std::cout << "Joined " << s0 << " and " << s1 << " to " << s
                 //           << " at " << e->edge.w << "\n";
                 if (s0 != s1) {
-                    std::cout << s0 << " " << s1 << " " << s << " " << e->edge.w << std::endl;
+                    of << s0 << " " << s1 << " " << s << " " << e->edge.w << std::endl;
                 }
             }
 
@@ -118,6 +123,9 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
             // loop over other edges e0 = {v0,v}
             for (auto& e0 : incident[v0])
             {
+                if (e0.first == v0)
+                    std::cout << "loop in the incident matrix: " << e0.first << std::endl;
+
                 incident[e0.first].erase(v0);
                 if (incident[v1].count(e0.first)) // {v0,v} and {v1,v} exist, we
                                                   // need to merge them
@@ -164,8 +172,11 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
         remaps[i] = remaps[s];
     }
 
-    std::cout << "Total of " << next << " segments\n";
+    of.close();
 
+    //std::cout << "Total of " << next << " segments\n";
+
+    of.open("new_rg.in", std::ofstream::out | std::ofstream::trunc);
     while (heap.size())
     {
         auto e = heap.top();
@@ -174,8 +185,9 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
         auto v1 = e->edge.v1;
         auto s0 = sets.find_set(v0);
         auto s1 = sets.find_set(v1);
-        std::cout << s0 << " " << s1 << " " << e->edge.w << std::endl;
+        of << s0 << " " << s1 << " " << e->edge.w << std::endl;
     }
+    of.close();
 
     return remaps;
 }
