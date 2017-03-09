@@ -263,8 +263,8 @@ int main(int argc, char *argv[])
     std::vector<edge_t<mean_edge>> rg;
     double th = atof(argv[1]);
 
-    std::size_t v, n;
-    std::cin >> v >> n;
+    std::size_t m, v, n;
+    std::cin >> m >> v >> n;
 
     for (std::size_t i = 0; i < n; ++i)
     {
