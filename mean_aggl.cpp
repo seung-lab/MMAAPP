@@ -258,9 +258,10 @@ operator<<(::std::basic_ostream<CharT, Traits>& os, mean_edge const& v)
     return os;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     std::vector<edge_t<mean_edge>> rg;
+    double th = atof(argv[1]);
 
     std::size_t v, n;
     std::cin >> v >> n;
@@ -277,7 +278,7 @@ int main()
     }
 
     auto res = agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
-                           mean_edge_limits>(rg, mean_edge(0.1, 1), v);
+                           mean_edge_limits>(rg, mean_edge(th, 1), v);
 
     //for (auto& e : res)
     //{
