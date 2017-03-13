@@ -723,6 +723,7 @@ function process_rg(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
             if edge in visited
                 continue
             elseif edge.sum == edge.aff
+                push!(visited, edge)
                 continue
             end
             push!(visited, edge)
