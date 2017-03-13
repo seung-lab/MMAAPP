@@ -685,10 +685,10 @@ function process_edge(set_a, set_b, rg_volume, d_sem)
             if edge.num > 1000
                 continue
             end
-            if edge.aff/edge.area > 0.5 || (edge.aff/edge.area > agg_threshold && 50 < edge.num < 300)
             if length(set_b) > 5 && d_sem[b][4] > 1000
                 continue
             end
+            if edge.aff/edge.area > 0.6 || (edge.aff/edge.area > reliable_th && 20 < edge.num < 400)
                 println("process: $(length(set_a)), $(length(set_b))")
                 println("atomic edge: $edge")
                 return true
@@ -711,7 +711,7 @@ function process_rg(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
     while length(queue) > 0
         a = dequeue!(queue)
         for b in keys(new_rg[a])
-            if haskey(segs,b) && (length(segs[b]) > 20 || sum_vol(segs[b], d_size) > 1000000)
+            if haskey(segs,b) && (length(segs[b]) > 30 || sum_vol(segs[b], d_size) > 1000000)
                 continue
             #elseif !haskey(segs,b) && d_size[b] < 5000
             #    continue
