@@ -246,6 +246,30 @@ function check_dend(segment, rg_volume, d_sizes, d_sem)
     return false
 end
 
+function check_segment2(segment, rg_volume, d_sizes, d_faceareas)
+    free_ends = Set{Int}()
+    count = 0
+    total_vol = sum_vol(segment, d_sizes)
+    for s in segment
+        cc = check_connectivity(Set{Int}(s), segment, rg_volume)
+        if cc == 2
+            count += 1
+        elseif cc == 1
+            push!(free_ends, s)
+        end
+    end
+    #ends = setdiff(free_ends, keys(d_faceareas))
+    ends = really_check_freeends(free_ends, segment, rg_volume, d_sizes, d_faceareas)
+    if length(ends) > 3 && (count * 3 < length(segment))
+        return "glial", ends
+    end
+    if count * 2 > length(segment)
+        return "axon", ends
+    else
+        return "not sure", ends
+    end
+end
+
 function check_segment(segment, rg_volume, d_sizes, d_faceareas)
     free_ends = Set{Int}()
     count = 0
