@@ -7,11 +7,11 @@ type atomic_edge
     p1::Int
     p2::Int
     sum::Float64
-    num::Int
+    num::Float64
     v1::Int
     v2::Int
     aff::Float64
-    area::Int
+    area::Float64
 end
 
 agg_threshold = parse(Float64, ARGS[1])
@@ -102,9 +102,9 @@ function read_rg(fn, pd)
         u1 = parse(Int, data[5])
         u2 = parse(Int, data[6])
         aff = parse(Float64, data[7])
-        area = convert(Int, parse(Float64, data[8]))
+        area = parse(Float64, data[8])
         s = parse(Float64, data[3])
-        n = convert(Int, parse(Float64, data[4]))
+        n = parse(Float64, data[4])
         p1 = parse(Int, data[1])
         p2 = parse(Int, data[2])
         a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
@@ -298,9 +298,9 @@ function process_volume()
         u1 = parse(Int, data[5])
         u2 = parse(Int, data[6])
         aff = parse(Float64, data[7])
-        area = parse(Int, data[8])
+        area = parse(Float64, data[8])
         s = parse(Float64, data[3])
-        n = parse(Int, data[4])
+        n = parse(Float64, data[4])
         p1 = parse(Int, data[1])
         p2 = parse(Int, data[2])
         a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
