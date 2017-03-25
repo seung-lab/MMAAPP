@@ -93,6 +93,16 @@ function check_edge(edge, seg1, seg2)
     return true
 end
 
+function read_bboxes(fn)
+    bbox_file = open(fn)
+    bboxes = Dict{Int, Array{Int, 1}}()
+    for ln in eachline(bbox_file)
+        data = [parse(Int,x) for x in split(ln, " ")]
+        bboxes[data[1]] = data[2:end]
+    end
+    return bboxes
+end
+
 function read_rg(fn, pd)
     rg_file = open(fn)
     #rg = Dict{Tuple{Int,Int},atomic_edge}()
@@ -816,6 +826,33 @@ function find_ends_of_dend(seg, rg_volume, d_size, d_sem)
     return tails
 end
 
+function merge_bbox(seg)
+    bbox = [typemax(Int32),typemax(Int32),typemax(Int32),typemin(Int32),typemin(Int32),typemin(Int32)]
+    for c in seg
+        for i in 1:3
+            bbox[i] = min(bbox[i], bboxes[c][i])
+            bbox[i+3] = max(bbox[i+3], bboxes[c][i+3])
+        end
+    end
+    return bbox
+end
+
+function expand_bbox(bbox, delta)
+    for i in 1:3
+        bbox[i] -= delta[i]
+        bbox[i+3] += delta[i]
+    end
+end
+
+function overlap_bbox(b1, b2)
+    si = max(0, min(b1[4], b2[4]) - max(b1[1], b2[1])) * max(0, min(b1[5], b2[5]) - max(b1[2], b2[2])) * max(0, min(b1[6], b2[6]) - max(b1[3], b2[3]))
+    if si > 0
+        return true
+    else
+        return false
+    end
+end
+
 function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_graph)
     spines = Set{Int}()
     trunks = Dict{Int,Int}()
@@ -889,6 +926,44 @@ function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
             end
         end
     end
+    #println(spines)
+    #return spines
+    for a in keys(new_rg)
+        if a in considered || a in spines
+            continue
+        end
+        set_a = get(segs, a, Set{Int}([a]))
+        if length(set_a) > 5 || sum_vol(set_a, d_size) > 1000000
+            continue
+        end
+        sem_a = sum_sem(set_a, d_sem)
+        c, sem_max = max_sem(set_a, d_sem)
+        if sem_a[4] < 200
+            continue
+        end
+        #bbox = expand_bbox(merge_bbox(set_a), [1,1,1])
+        bbox = merge_bbox(set_a)
+        candidates = Set{Int}()
+        for b in setdiff(keys(trunks), spines)
+            if overlap_bbox(bbox, bboxes[b])
+                println("bbox overlap: $a, $b")
+                push!(candidates, trunks[b])
+            end
+        end
+        if length(candidates) == 1
+            c = collect(candidates)[1]
+            println("merge: $a, $c")
+            #push!(merge_graph[a], c)
+            #push!(merge_graph[c], a)
+            #push!(spines, a)
+            #if !haskey(new_rg[c],a)
+            #    a_edge = atomic_edge(c, a, 0.2, 1, c, a, 0.2, 1)
+            #    new_rg[c][a] = a_edge
+            #    new_rg[a][c] = a_edge
+            #end
+        end
+    end
+
     println(spines)
     return spines
 end
@@ -965,6 +1040,7 @@ sgm = readsgm("sgm.h5")
 println("$(length(keys(d_sizes)))")
 segs, pd = agglomerate(sgm)
 new_rg = read_rg("new_rg.in", pd)
+bboxes = read_bboxes("bbox_volume.in")
 println("size of rg: $(length(keys(new_rg)))")
 
 l_segs = []
