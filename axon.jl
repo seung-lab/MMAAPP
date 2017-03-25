@@ -116,12 +116,36 @@ function read_rg(fn, pd)
     return rg
 end
 
+function max_sem(clst, d_sem)
+    max_seg = 0
+    sem_max = zero(Float32)
+    for c in clst
+        if d_sem[c][4] > sem_max
+            sem_max = d_sem[c][4]
+            max_seg = c
+        end
+    end
+    return max_seg, sem_max
+end
+
 function sum_sem(clst, d_sem)
     total_sem = Float32[0,0,0,0]
     for c in clst
         total_sem += d_sem[c]
     end
     return total_sem
+end
+
+function max_vol(clst, d_sizes)
+    max_seg = 0
+    vol_max = 0
+    for c in clst
+        if d_sizes[c] > vol_max
+            vol_max = d_sizes[c]
+            max_seg = c
+        end
+    end
+    return max_seg, vol_max
 end
 
 function sum_vol(clst, d_sizes)
