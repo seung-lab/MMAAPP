@@ -703,6 +703,7 @@ function match_long_axons(small_pieces, long_axons, new_rg, considered, is_stric
 end
 
 function process_edge(set_a, set_b, rg_volume, d_sem)
+    max_aff = zero(Float64)
     for a in set_a
         for b in intersect(keys(rg_volume[a]),set_b)
             edge = rg_volume[a][b]
@@ -713,13 +714,15 @@ function process_edge(set_a, set_b, rg_volume, d_sem)
                 continue
             end
             if edge.aff/edge.area > 0.6 || (edge.aff/edge.area > reliable_th && 20 < edge.num < 400)
-                println("process: $(length(set_a)), $(length(set_b))")
-                println("atomic edge: $edge")
-                return true
+                if max_aff < edge.aff/edge.area
+                    println("process: $(length(set_a)), $(length(set_b))")
+                    println("atomic edge: $edge")
+                    max_aff = edge.aff/edge.area
+                end
             end
         end
     end
-    return false
+    return max_aff
 end
 
 function find_ends(segs, head, rg_volume, d_sem)
@@ -770,50 +773,57 @@ function process_rg(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
     visited = Set{atomic_edge}()
     dend_candidates = Set{Int}()
     spine_candidates = Set{Int}()
-    queue = Queue(Int)
+    trunks = Set{Int}()
     for l in keys(segs)
-        if check_dend(segs[l], rg_volume, d_size, d_sem)
-            enqueue!(queue, l)
+        if check_dend(segs[l], rg_volume, d_size, d_sem) && !(l in considered)
+            push!(trunks, l)
         end
     end
-    while length(queue) > 0
-        a = dequeue!(queue)
-        for b in keys(new_rg[a])
-            if haskey(segs,b) && (length(segs[b]) > 30 || sum_vol(segs[b], d_size) > 1000000)
+    keep = true
+    while keep
+        keep = false
+        for b in setdiff(keys(new_rg), spine_candidates)
+            if (haskey(segs,b) && (length(segs[b]) > 30 || sum_vol(segs[b], d_size) > 1000000)) || b in considered
                 continue
             #elseif !haskey(segs,b) && d_size[b] < 5000
             #    continue
             end
-            if a in considered || b in considered
+            set_b = get(segs, b, Set([b]))
+            sem_b = sum_sem(set_b, d_sem)
+            vol_b = sum_vol(set_b, d_size)
+            if sem_b[2] < sem_b[1] || sem_b[2] < 0.3*vol_b
                 continue
             end
-            edge = new_rg[a][b]
-            if edge in visited
-                continue
-            elseif edge.sum == edge.aff
-                push!(visited, edge)
-                continue
-            end
-            push!(visited, edge)
-            set_a = Set([a])
-            set_b = Set([b])
-            if haskey(segs,a)
-                set_a = segs[a]
-            end
-            if haskey(segs,b)
-                set_b = segs[b]
-                sem_b = sum_sem(set_b, d_sem)
-                vol_b = sum_vol(set_b, d_size)
-                if sem_b[2] < sem_b[1] || sem_b[2] < 0.3*vol_b
-                    continue
+            #if length(set_b) > 5
+            #    seg_b, freeends_b = check_segment(set_b, rg_volume, d_sizes, d_faceareas)
+            #    println("$b, $freeends_b")
+            #    if length(freeends_b) > 0
+            #        set_b = freeends_b
+            #    end
+            #end
+            max_a = zero(Int)
+            max_aff = zero(Float64)
+            for a in trunks
+                set_a = get(segs, a, Set([a]))
+                #if length(set_a) > 5
+                #    seg_a, freeends_a = check_segment(set_a, rg_volume, d_sizes, d_faceareas)
+                #    if length(freeends_a) > 0
+                #        set_a = freeends_a
+                #    end
+                #end
+                tmp = process_edge(set_a, set_b, rg_volume, d_sem)
+                if tmp > reliable_th && tmp > max_aff
+                    max_aff = tmp
+                    max_a = a
                 end
             end
-            if process_edge(set_a, set_b, rg_volume, d_sem) && !haskey(merge_graph,b)
-                push!(dend_candidates,a)
+            if max_aff > reliable_th
+                push!(dend_candidates,max_a)
                 push!(spine_candidates,b)
-                push!(merge_graph[a],b)
-                push!(merge_graph[b],a)
-                enqueue!(queue,b)
+                push!(merge_graph[max_a],b)
+                push!(merge_graph[b],max_a)
+                push!(segs[max_a], b)
+                keep = true
             end
         end
     end
