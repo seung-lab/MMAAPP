@@ -779,6 +779,29 @@ function find_ends(segs, head, rg_volume, d_sem)
     return tail
 end
 
+function match_segments(tails, set, trunks, rg_volume)
+    max_mean = zero(Float64)
+    target = zero(Int32)
+    for a in tails
+        for b in keys(rg_volume[a])
+            if b in set || !(b in trunks)
+                continue
+            end
+            edge = rg_volume[a][b]
+            tmp = edge.aff/edge.area
+            if tmp > max_mean
+                max_mean = tmp
+                target = b
+            end
+        end
+    end
+    if max_mean > reliable_th
+        return target
+    else
+        return zero(Float64)
+    end
+end
+
 function find_ends_of_dend(seg, rg_volume, d_size, d_sem)
     vol_seg = sum_vol(seg, d_size)
     a, vol_max = max_vol(seg, d_size)
@@ -791,6 +814,83 @@ function find_ends_of_dend(seg, rg_volume, d_size, d_sem)
         union!(tails, find_ends(branches,b,rg_volume,d_sem))
     end
     return tails
+end
+
+function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_graph)
+    spines = Set{Int}()
+    trunks = Dict{Int,Int}()
+    for l in keys(segs)
+        if check_dend(segs[l], rg_volume, d_size, d_sem)
+            tails = find_ends_of_dend(segs[l], rg_volume, d_size, d_sem)
+            for c in tails
+                trunks[c] = l
+            end
+        end
+    end
+
+    for a in keys(new_rg)
+        if a in considered
+            continue
+        end
+        set_a = get(segs,a,Set{Int}([a]))
+        vol_a = sum_vol(set_a, d_size)
+        if length(set_a) > 100 || vol_a > 1000000
+            continue
+        end
+        sem_a = sum_sem(set_a, d_sem)
+        b, sem_max = max_sem(set_a, d_sem)
+        if sem_a[4] < 200
+            continue
+        end
+        tail = Set{Int}()
+        if sem_max > 0.5*sem_a[4]
+            tail = find_ends(set_a, b, rg_volume, d_sem)
+        end
+        current_seg = a
+        while true
+            seg_a, freeends_a = check_segment2(set_a, rg_volume, d_sizes, d_faceareas)
+            ends = intersect(freeends_a, tail)
+            if length(set_a) < 3
+                ends = set_a
+            end
+            println("segid: $(current_seg), parts: $(length(set_a)), size: $(vol_a), free_ends: $(tail), $(freeends_a) ($(b))")
+            if 0 < length(ends) < 3
+                vol_a = sum_vol(set_a, d_size)
+                #println("segid: $(current_seg), parts: $(length(set_a)), size: $(vol_a), free_ends: $(ends) ($(b))")
+                target = match_segments(ends, set_a, keys(trunks), rg_volume)
+                if target == 0 && length(set_a) > 5
+                    target = match_segments(ends, set_a, keys(rg_volume), rg_volume)
+                end
+                if target != 0
+                    new_seg = get(pd, target, target)
+                    push!(merge_graph[current_seg], new_seg)
+                    push!(merge_graph[new_seg], current_seg)
+                    push!(spines, current_seg)
+                    push!(spines, target)
+                    println("merge: $(current_seg), $(new_seg) ($(ends), $target)")
+                    if length(get(segs, new_seg, Set{Int}([new_seg]))) < 5 && sum_vol(get(segs, new_seg, Set{Int}([new_seg])), d_size) < 1000000
+                        println("keep searching: $new_seg, $target")
+                        union!(set_a, get(segs, new_seg, Set{Int}([new_seg])))
+                        new_b, sem_max = max_sem(set_a, d_sem)
+                        if new_b !== b
+                            break
+                        end
+                        tail = find_ends(set_a, b, rg_volume, d_sem)
+                        current_seg = new_seg
+                    else
+                        break
+                    end
+                else
+                    break
+                end
+            else
+                push!(spines, current_seg)
+                break
+            end
+        end
+    end
+    println(spines)
+    return spines
 end
 
 function process_rg(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_graph)
