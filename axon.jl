@@ -722,6 +722,50 @@ function process_edge(set_a, set_b, rg_volume, d_sem)
     return false
 end
 
+function find_ends(segs, head, rg_volume, d_sem)
+    visited = Set{Int}()
+    queue = Queue(Int)
+    enqueue!(queue, head)
+    tail = Set{Int}([head])
+    children = Set{Int}()
+    while length(queue) > 0
+        root = dequeue!(queue)
+        if !(root in visited)
+            if root != head && d_sem[root][4] > 500
+                return Set{Int}()
+            end
+            push!(visited, root)
+            for neighboor in keys(rg_volume[root])
+                if (!(neighboor in visited)) && neighboor in segs
+                    push!(children, neighboor)
+                end
+            end
+        end
+        if length(queue) == 0 && length(children) > 0
+            for c in children
+                enqueue!(queue, c)
+            end
+            tail = children
+            children = Set{Int}()
+        end
+    end
+    return tail
+end
+
+function find_ends_of_dend(seg, rg_volume, d_size, d_sem)
+    vol_seg = sum_vol(seg, d_size)
+    a, vol_max = max_vol(seg, d_size)
+    if vol_max < 0.5*vol_seg
+        return Set{Int}()
+    end
+    branches = setdiff(seg, Set{Int}([a]))
+    tails = Set{Int}()
+    for b in intersect(branches, keys(rg_volume[a]))
+        union!(tails, find_ends(branches,b,rg_volume,d_sem))
+    end
+    return tails
+end
+
 function process_rg(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_graph)
     visited = Set{atomic_edge}()
     dend_candidates = Set{Int}()
