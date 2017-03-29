@@ -175,4 +175,38 @@ function read_rg(fn, pd)
     return rg
 end
 
+function agglomerate(sgm)
+    pd = Dict{UInt32,UInt32}()
+    segs = Dict{Int, Set{Int}}()
+    for idx in 1:length(sgm.segmentPairAffinities)
+        if sgm.segmentPairAffinities[idx] > agg_threshold
+            # the first one is child, the second one is parent
+            pd[sgm.segmentPairs[idx,1]] = sgm.segmentPairs[idx,2]
+        end
+    end
+
+    # find the root id
+    for (c,p) in pd
+        # list of child node, for path compression
+        clst = Set{Int}(c)
+        # find the root
+        while haskey(pd, p)
+            push!(clst, p)
+            p = pd[p]
+        end
+        for c in clst
+            pd[c] = p
+        end
+        # now p is the root id
+        # path compression
+        if haskey(segs, p)
+            #println("root already exist")
+            union!(segs[p], clst)
+        else
+            segs[p] = clst
+            push!(segs[p],p)
+        end
+    end
+    return segs, pd
+end
 
