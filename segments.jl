@@ -153,30 +153,6 @@ function read_rg(fn, pd)
     return num_seg,rg_volume
 end
 
-
-function read_rg(fn, pd)
-    rg_file = open(fn)
-    #rg = Dict{Tuple{Int,Int},atomic_edge}()
-    rg = DefaultOrderedDict{Int, Dict{Int, atomic_edge}}(()->Dict{Int, atomic_edge}())
-    for ln in eachline(rg_file)
-        data = split(ln, " ")
-        u1 = parse(Int, data[5])
-        u2 = parse(Int, data[6])
-        aff = parse(Float64, data[7])
-        area = parse(Float64, data[8])
-        s = parse(Float64, data[3])
-        n = parse(Float64, data[4])
-        p1 = parse(Int, data[1])
-        p2 = parse(Int, data[2])
-        a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
-        #p1 = get(pd, u1, u1)
-        #p2 = get(pd, u2, u2)
-        rg[p1][p2] = a_edge
-        rg[p2][p1] = a_edge
-    end
-    return rg
-end
-
 function agglomerate(sgm)
     pd = Dict{UInt32,UInt32}()
     segs = Dict{Int, Set{Int}}()
