@@ -9,9 +9,14 @@ type atomic_edge
     area::Float64
 end
 
+typealias RegionGraph DefaultOrderedDict{Int, Dict{Int, atomic_edge}}
+typealias BoundingBoxes Dict{Int, Array{Int, 1}}
+typealias SupervoxelSize DefaultOrderedDict{Int,Int}
+typealias SemanticInfo DefaultOrderedDict{Int,Array{Float32,1}}
+
 function read_bboxes(fn)
     bbox_file = open(fn)
-    bboxes = Dict{Int, Array{Int, 1}}()
+    bboxes = BoundingBoxes()
     for ln in eachline(bbox_file)
         data = [parse(Int,x) for x in split(ln, " ")]
         bboxes[data[1]] = data[2:end]
@@ -21,7 +26,7 @@ end
 
 function read_size(fn)
     size_file = open(fn)
-    d_sizes = DefaultOrderedDict{Int,Int}(()->0)
+    d_sizes = SupervoxelSize(0)
     for ln in eachline(size_file)
         data = split(ln, " ")
         seg_id = parse(Int, data[1])
@@ -112,7 +117,7 @@ end
 
 function read_semantic(fn)
     sem_file = open(fn)
-    d_sem = DefaultOrderedDict{Int,Array{Float32,1}}(()-> Float32[])
+    d_sem = SemanticInfo(()-> Float32[])
     for ln in eachline(sem_file)
         data = split(ln, " ")
         seg_id = parse(Int, data[1])
@@ -127,7 +132,7 @@ end
 
 function read_rg(fn, pd)
     rg_file = open(fn)
-    rg_volume = DefaultOrderedDict{Int, Dict{Int, atomic_edge}}(()->Dict{Int, atomic_edge}())
+    rg_volume = RegionGraph(()->Dict{Int, atomic_edge}())
     num_seg = 0
     for ln in eachline(rg_file)
         data = split(ln, " ")
