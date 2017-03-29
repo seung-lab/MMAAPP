@@ -16,13 +16,14 @@ th_tier3 = agg_threshold - 0.000025
 reliable_th = parse(Float64, ARGS[2])
 
 sgm = readsgm("sgm.h5")
-@time num_seg, rg_volume = process_volume()
-@time d_sizes = process_size()
-@time d_sem = process_semantic()
-println("$(length(keys(d_sizes)))")
 segs, pd = agglomerate(sgm)
+num_seg, rg_volume = process_volume()
+d_sizes = process_size()
+d_sem = process_semantic()
+rg_faces, face_segs, d_faceareas = process_faces(sgm.segmentation)
 new_rg = read_rg("new_rg.in", pd)
 bboxes = read_bboxes("bbox_volume.in")
+println("$(length(keys(d_sizes)))")
 println("size of rg: $(length(keys(new_rg)))")
 
 l_segs = []
@@ -33,7 +34,6 @@ end
 
 #sort!(l_segs, by=x->x[3]/x[2],rev=true)
 
-@time rg_faces, face_segs, d_faceareas = process_faces(sgm.segmentation)
 println("size of rg: $(length(keys(rg_faces)))")
 axons = Dict{Int, Set{Int}}()
 free_ends = Dict{Int, Int}()
