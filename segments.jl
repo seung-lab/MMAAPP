@@ -19,8 +19,8 @@ function read_bboxes(fn)
     return bboxes
 end
 
-function process_size()
-    size_file = open("sv_size.in")
+function read_size(fn)
+    size_file = open(fn)
     d_sizes = DefaultOrderedDict{Int,Int}(()->0)
     for ln in eachline(size_file)
         data = split(ln, " ")
@@ -110,8 +110,8 @@ function process_faces(seg)
     return rg_faces, face_segs, d_faceareas
 end
 
-function process_semantic()
-    sem_file = open("sem_volume.in")
+function read_semantic(fn)
+    sem_file = open(fn)
     d_sem = DefaultOrderedDict{Int,Array{Float32,1}}(()-> Float32[])
     for ln in eachline(sem_file)
         data = split(ln, " ")
@@ -125,8 +125,8 @@ function process_semantic()
     return d_sem
 end
 
-function process_volume()
-    rg_file = open("rg_volume.in")
+function read_rg(fn, pd)
+    rg_file = open(fn)
     rg_volume = DefaultOrderedDict{Int, Dict{Int, atomic_edge}}(()->Dict{Int, atomic_edge}())
     num_seg = 0
     for ln in eachline(rg_file)
@@ -144,6 +144,8 @@ function process_volume()
         p1 = parse(Int, data[1])
         p2 = parse(Int, data[2])
         a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
+        #p1 = get(pd, u1, u1)
+        #p2 = get(pd, u2, u2)
         rg_volume[p1][p2] = a_edge
         rg_volume[p2][p1] = a_edge
     end
