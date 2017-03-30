@@ -15,18 +15,6 @@ th_tier2 = agg_threshold - 0.000015
 th_tier3 = agg_threshold - 0.000025
 reliable_th = parse(Float64, ARGS[2])
 
-segs, pd = agglomerate("test_mst.in")
-num_seg, rg_volume = read_rg("rg_volume.in", Dict{UInt32,UInt32}())
-d_sizes = read_size("sv_size.in")
-d_sem = read_semantic("sem_volume.in")
-#rg_faces, face_segs, d_facesegs = process_faces(sgm.segmentation)
-_, new_rg = read_rg("new_rg.in", pd)
-bboxes = read_bboxes("bbox_volume.in")
-println("$(length(keys(d_sizes)))")
-println("size of rg: $(length(keys(new_rg)))")
-#d_facesegs = DefaultOrderedDict{Int,Int}(0)
-d_facesegs = find_facesegs(bboxes,[1,1,1,2048,2048,256])
-
 l_segs = []
 
 for k in keys(segs)
