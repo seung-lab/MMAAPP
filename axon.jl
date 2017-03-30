@@ -1,4 +1,4 @@
-function check_edge(edge, seg1, seg2)
+function check_edge(rg_volume, edge, seg1, seg2)
     neighboor1 = Set{Int}()
     neighboor2 = Set{Int}()
     if edge.v1 in seg1
@@ -33,7 +33,7 @@ function check_edge(edge, seg1, seg2)
     return true
 end
 
-function match_axons(axons, segs, new_rg, free_ends, considered, is_strict, merge_graph)
+function match_axons(axons, segs, new_rg, rg_volume, free_ends, considered, is_strict, merge_graph)
     visited = Set{atomic_edge}()
     pairs = Int[]
     processed = Set{Int}()
@@ -56,7 +56,7 @@ function match_axons(axons, segs, new_rg, free_ends, considered, is_strict, merg
             if is_strict && a_edge.sum/a_edge.num < reliable_th
                 continue
             end
-            if check_edge(a_edge, segs[a], segs[b])
+            if check_edge(rg_volume, a_edge, segs[a], segs[b])
                 p = minmax(a,b)
                 println("$(p[1]), $(p[2])")
                 println(a_edge)

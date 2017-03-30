@@ -14,11 +14,13 @@ th_tier1 = agg_threshold - 0.000005
 th_tier2 = agg_threshold - 0.000015
 th_tier3 = agg_threshold - 0.000025
 reliable_th = parse(Float64, ARGS[2])
+svInfo, segInfo = load_segments([1,1,1,2048,2048,256])
 
 l_segs = []
 
+segs = segInfo.supervoxelDict
 for k in keys(segs)
-    push!(l_segs, [k,length(segs[k]),sum_vol(segs[k], d_sizes),sum_sem(segs[k], d_sem)])
+    push!(l_segs, [k,length(segs[k]),sum_vol(segs[k], svInfo.supervoxelSizes),sum_sem(segs[k], svInfo.semanticInfo)])
 end
 
 #sort!(l_segs, by=x->x[3]/x[2],rev=true)
@@ -33,7 +35,7 @@ for l in l_segs
     if l[3] < 10000000 && l[2] > 5
         #ccsz = connected(intersect(keys(rg_faces), segs[l[1]]), rg_faces, d_facesegs)
         #faces = faces_touched(segs[l[1]], face_segs)
-        seg_type, axon_freeends = check_segment(segs[l[1]], rg_volume, d_sizes, d_facesegs)
+        seg_type, axon_freeends = check_segment(segs[l[1]], svInfo.regionGraph, svInfo.supervoxelSizes, svInfo.boundarySupervoxels)
         if !isempty(axon_freeends) && length(axon_freeends) < 10
             println("segid: $(l[1]), parts: $(l[2]), size: $(l[3]), free_ends: $(length(axon_freeends)) ($(axon_freeends))")
             #push!(checks, [l[1], axon_freeends])
@@ -49,7 +51,7 @@ for l in l_segs
             push!(really_long_axons, l[1])
         end
     elseif l[2] < 5
-        if isempty(intersect(segs[l[1]], d_facesegs))
+        if isempty(intersect(segs[l[1]], svInfo.boundarySupervoxels))
             push!(small_pieces, l[1])
         end
     end
@@ -64,19 +66,19 @@ merge_graph1 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 merge_graph2 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 merge_graph3 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 considered = Set{Int}()
-union!(considered, match_long_axons(small_pieces, long_axons, new_rg, considered, true, merge_graph1))
-union!(considered, match_axons(axons, segs, new_rg, free_ends, considered, true, merge_graph1))
-union!(considered, process_rg(new_rg, segs, rg_volume, d_sizes, d_sem, considered, merge_graph1))
-matches = merge_edges(merge_graph1, th_tier1, new_rg)
-union!(considered, check_segs(new_rg, segs, rg_volume, d_sizes, d_sem, considered, merge_graph2))
+union!(considered, match_long_axons(small_pieces, long_axons, segInfo.regionGraph, considered, true, merge_graph1))
+union!(considered, match_axons(axons, segs, segInfo.regionGraph, svInfo.regionGraph, free_ends, considered, true, merge_graph1))
+union!(considered, process_rg(segInfo.regionGraph, segs, svInfo.regionGraph, svInfo.supervoxelSizes, svInfo.semanticInfo, considered, merge_graph1))
+matches = merge_edges(merge_graph1, th_tier1, segInfo.regionGraph)
+union!(considered, check_segs(segInfo.regionGraph, segInfo.supervoxelDict, svInfo.regionGraph, svInfo.supervoxelSizes, svInfo.semanticInfo, svInfo.boundarySupervoxels, svInfo.segmentDict, considered, merge_graph2))
 
 #discard = match_long_axons(small_pieces, long_axons, new_rg, considered, false, merge_graph2)
 #union!(discard, match_axons(axons, segs, new_rg, free_ends, considered, false, merge_graph2))
-matches2 = merge_edges(merge_graph2, th_tier2, new_rg)
+matches2 = merge_edges(merge_graph2, th_tier2, segInfo.regionGraph)
 ##matches2 = merge_edges(merge_graph2, 0.199985, new_rg)
 #union!(considered,discard)
 #discard = match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_facesegs, considered, merge_graph3)
 #matches3 = merge_edges(merge_graph3, th_tier3, new_rg)
 #matches = match_long_axons(small_pieces, long_axons, new_rg)
-update_new_rg(num_seg, new_rg, merge(matches, matches2))
+update_new_rg(svInfo.totalSupervoxels, segInfo.regionGraph, merge(matches, matches2))
 #println([x[1] for x in checks])

@@ -13,6 +13,25 @@ typealias RegionGraph DefaultOrderedDict{Int, Dict{Int, atomic_edge}}
 typealias BoundingBoxes Dict{Int, Array{Int, 1}}
 typealias SupervoxelSize DefaultOrderedDict{Int,Int}
 typealias SemanticInfo DefaultOrderedDict{Int,Array{Float32,1}}
+typealias SegmentDict Dict{Int,Int}
+typealias SupervoxelDict Dict{Int, Set{Int}}
+typealias BoundarySupervoxels Set{Int}
+
+
+type SupervoxelInfo
+    totalSupervoxels::Int64
+    regionGraph::RegionGraph
+    boundingBoxes::BoundingBoxes
+    supervoxelSizes::SupervoxelSize
+    semanticInfo::SemanticInfo
+    segmentDict::SegmentDict
+    boundarySupervoxels::BoundarySupervoxels
+end
+
+type SegmentInfo
+    regionGraph::RegionGraph
+    supervoxelDict::SupervoxelDict
+end
 
 function read_bboxes(fn)
     bbox_file = open(fn)
@@ -106,8 +125,8 @@ end
 
 
 function agglomerate(fn)
-    pd = Dict{UInt32,UInt32}()
-    segs = Dict{Int, Set{Int}}()
+    pd = SegmentDict()
+    segs = SupervoxelDict()
     mst = open(fn)
     for l in eachline(mst)
         entry = mst_entry(l)
@@ -140,14 +159,19 @@ function agglomerate(fn)
     return segs, pd
 end
 
-segs, pd = agglomerate("test_mst.in")
-num_seg, rg_volume = read_rg("rg_volume.in", Dict{UInt32,UInt32}())
-d_sizes = read_size("sv_size.in")
-d_sem = read_semantic("sem_volume.in")
-#rg_faces, face_segs, d_facesegs = process_faces(sgm.segmentation)
-_, new_rg = read_rg("new_rg.in", pd)
-bboxes = read_bboxes("bbox_volume.in")
-println("$(length(keys(d_sizes)))")
-println("size of rg: $(length(keys(new_rg)))")
-#d_facesegs = DefaultOrderedDict{Int,Int}(0)
-d_facesegs = find_facesegs(bboxes,[1,1,1,2048,2048,256])
+function load_segments(chunk_bbox)
+    segs, pd = agglomerate("test_mst.in")
+    num_seg, rg_volume = read_rg("rg_volume.in", Dict{UInt32,UInt32}())
+    d_sizes = read_size("sv_size.in")
+    d_sem = read_semantic("sem_volume.in")
+    #rg_faces, face_segs, d_facesegs = process_faces(sgm.segmentation)
+    _, new_rg = read_rg("new_rg.in", pd)
+    bboxes = read_bboxes("bbox_volume.in")
+    println("$(length(keys(d_sizes)))")
+    println("size of rg: $(length(keys(new_rg)))")
+    #d_facesegs = DefaultOrderedDict{Int,Int}(0)
+    d_facesegs = find_facesegs(bboxes,chunk_bbox)
+    svInfo = SupervoxelInfo(num_seg, rg_volume, bboxes, d_sizes, d_sem, pd, d_facesegs)
+    segInfo = SegmentInfo(new_rg, segs)
+    return svInfo, segInfo
+end

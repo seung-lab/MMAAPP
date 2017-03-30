@@ -59,12 +59,12 @@ function match_segments(tails, set, trunks, rg_volume)
     end
 end
 
-function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_graph)
+function check_segs(new_rg, segs, rg_volume, d_sizes, d_sem, d_facesegs, pd, considered, merge_graph)
     spines = Set{Int}()
     trunks = Dict{Int,Int}()
     for l in keys(segs)
-        if check_dend(segs[l], rg_volume, d_size, d_sem)
-            tails = find_ends_of_dend(segs[l], rg_volume, d_size, d_sem)
+        if check_dend(segs[l], rg_volume, d_sizes, d_sem)
+            tails = find_ends_of_dend(segs[l], rg_volume, d_sizes, d_sem)
             for c in tails
                 trunks[c] = l
             end
@@ -76,7 +76,7 @@ function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
             continue
         end
         set_a = get(segs,a,Set{Int}([a]))
-        vol_a = sum_vol(set_a, d_size)
+        vol_a = sum_vol(set_a, d_sizes)
         if length(set_a) > 100 || vol_a > 1000000
             continue
         end
@@ -98,7 +98,7 @@ function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
             end
             println("segid: $(current_seg), parts: $(length(set_a)), size: $(vol_a), free_ends: $(tail), $(freeends_a) ($(b))")
             if 0 < length(ends) < 3
-                vol_a = sum_vol(set_a, d_size)
+                vol_a = sum_vol(set_a, d_sizes)
                 #println("segid: $(current_seg), parts: $(length(set_a)), size: $(vol_a), free_ends: $(ends) ($(b))")
                 target = match_segments(ends, set_a, keys(trunks), rg_volume)
                 if target == 0 && length(set_a) > 5
@@ -111,7 +111,7 @@ function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
                     push!(spines, current_seg)
                     push!(spines, target)
                     println("merge: $(current_seg), $(new_seg) ($(ends), $target)")
-                    if length(get(segs, new_seg, Set{Int}([new_seg]))) < 5 && sum_vol(get(segs, new_seg, Set{Int}([new_seg])), d_size) < 1000000
+                    if length(get(segs, new_seg, Set{Int}([new_seg]))) < 5 && sum_vol(get(segs, new_seg, Set{Int}([new_seg])), d_sizes) < 1000000
                         println("keep searching: $new_seg, $target")
                         union!(set_a, get(segs, new_seg, Set{Int}([new_seg])))
                         new_b, sem_max = max_sem(set_a, d_sem)
@@ -139,7 +139,7 @@ function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
             continue
         end
         set_a = get(segs, a, Set{Int}([a]))
-        if length(set_a) > 5 || sum_vol(set_a, d_size) > 1000000
+        if length(set_a) > 5 || sum_vol(set_a, d_sizes) > 1000000
             continue
         end
         sem_a = sum_sem(set_a, d_sem)
@@ -174,13 +174,13 @@ function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
     return spines
 end
 
-function process_rg(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_graph)
+function process_rg(new_rg, segs, rg_volume, d_sizes, d_sem, considered, merge_graph)
     visited = Set{atomic_edge}()
     dend_candidates = Set{Int}()
     spine_candidates = Set{Int}()
     trunks = Set{Int}()
     for l in keys(segs)
-        if check_dend(segs[l], rg_volume, d_size, d_sem) && !(l in considered)
+        if check_dend(segs[l], rg_volume, d_sizes, d_sem) && !(l in considered)
             push!(trunks, l)
         end
     end
@@ -188,12 +188,12 @@ function process_rg(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
     while keep
         keep = false
         for b in setdiff(keys(new_rg), spine_candidates)
-            if (haskey(segs,b) && (length(segs[b]) > 30 || sum_vol(segs[b], d_size) > 1000000)) || b in considered
+            if (haskey(segs,b) && (length(segs[b]) > 30 || sum_vol(segs[b], d_sizes) > 1000000)) || b in considered
                 continue
             end
             set_b = get(segs, b, Set([b]))
             sem_b = sum_sem(set_b, d_sem)
-            vol_b = sum_vol(set_b, d_size)
+            vol_b = sum_vol(set_b, d_sizes)
             if sem_b[2] < sem_b[1] || sem_b[2] < 0.3*vol_b
                 continue
             end
