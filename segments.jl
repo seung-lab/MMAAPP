@@ -91,14 +91,28 @@ function read_rg(fn, pd)
     return num_seg,rg_volume
 end
 
-function agglomerate(sgm)
+function mst_entry(l)
+    data = split(l)
+    parent = parse(Int, data[3])
+    child1 = parse(Int, data[1])
+    child2 = parse(Int, data[2])
+    weight = parse(Float64, data[4])/parse(Float64, data[5])
+    if parent == child1
+        return (parent, child2, weight)
+    else
+        return (parent, child1, weight)
+    end
+end
+
+
+function agglomerate(fn)
     pd = Dict{UInt32,UInt32}()
     segs = Dict{Int, Set{Int}}()
-    for idx in 1:length(sgm.segmentPairAffinities)
-        if sgm.segmentPairAffinities[idx] > agg_threshold
+    mst = open(fn)
+    for l in eachline(mst)
+        entry = mst_entry(l)
             # the first one is child, the second one is parent
-            pd[sgm.segmentPairs[idx,1]] = sgm.segmentPairs[idx,2]
-        end
+            pd[entry[2]] = entry[1]
     end
 
     # find the root id

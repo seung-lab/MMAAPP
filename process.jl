@@ -15,8 +15,7 @@ th_tier2 = agg_threshold - 0.000015
 th_tier3 = agg_threshold - 0.000025
 reliable_th = parse(Float64, ARGS[2])
 
-sgm = readsgm("sgm.h5")
-segs, pd = agglomerate(sgm)
+segs, pd = agglomerate("test_mst.in")
 num_seg, rg_volume = read_rg("rg_volume.in", Dict{UInt32,UInt32}())
 d_sizes = read_size("sv_size.in")
 d_sem = read_semantic("sem_volume.in")
