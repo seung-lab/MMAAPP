@@ -26,9 +26,9 @@ function check_connectivity(s, segment, rg_volume)
     return cc
 end
 
-function really_check_freeends(ends, segment, rg_volume, d_sizes, d_faceareas)
+function really_check_freeends(ends, segment, rg_volume, d_sizes, d_facesegs)
     free_ends = Set{Int}()
-    boundary_segs = keys(d_faceareas)
+    boundary_segs = d_facesegs
     avg_vol = sum_vol(segment, d_sizes)/length(segment)
     for s in ends
         end_segment = Set{Int}()
@@ -62,7 +62,7 @@ function really_check_freeends(ends, segment, rg_volume, d_sizes, d_faceareas)
     return free_ends
 end
 
-function check_segment2(segment, rg_volume, d_sizes, d_faceareas)
+function check_segment2(segment, rg_volume, d_sizes, d_facesegs)
     free_ends = Set{Int}()
     count = 0
     total_vol = sum_vol(segment, d_sizes)
@@ -74,8 +74,8 @@ function check_segment2(segment, rg_volume, d_sizes, d_faceareas)
             push!(free_ends, s)
         end
     end
-    #ends = setdiff(free_ends, keys(d_faceareas))
-    ends = really_check_freeends(free_ends, segment, rg_volume, d_sizes, d_faceareas)
+    #ends = setdiff(free_ends, keys(d_facesegs))
+    ends = really_check_freeends(free_ends, segment, rg_volume, d_sizes, d_facesegs)
     if length(ends) > 3 && (count * 3 < length(segment))
         return "glial", ends
     end
@@ -86,7 +86,7 @@ function check_segment2(segment, rg_volume, d_sizes, d_faceareas)
     end
 end
 
-function check_segment(segment, rg_volume, d_sizes, d_faceareas)
+function check_segment(segment, rg_volume, d_sizes, d_facesegs)
     free_ends = Set{Int}()
     count = 0
     total_vol = sum_vol(segment, d_sizes)
@@ -101,8 +101,8 @@ function check_segment(segment, rg_volume, d_sizes, d_faceareas)
             push!(free_ends, s)
         end
     end
-    #ends = setdiff(free_ends, keys(d_faceareas))
-    ends = really_check_freeends(free_ends, segment, rg_volume, d_sizes, d_faceareas)
+    #ends = setdiff(free_ends, keys(d_facesegs))
+    ends = really_check_freeends(free_ends, segment, rg_volume, d_sizes, d_facesegs)
     if length(ends) > 3 && (count * 3 < length(segment))
         return "glial", Set{Int}()
     end

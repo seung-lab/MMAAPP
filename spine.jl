@@ -91,7 +91,7 @@ function check_segs(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
         end
         current_seg = a
         while true
-            seg_a, freeends_a = check_segment2(set_a, rg_volume, d_sizes, d_faceareas)
+            seg_a, freeends_a = check_segment2(set_a, rg_volume, d_sizes, d_facesegs)
             ends = intersect(freeends_a, tail)
             if length(set_a) < 3
                 ends = set_a
@@ -198,7 +198,7 @@ function process_rg(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
                 continue
             end
             #if length(set_b) > 5
-            #    seg_b, freeends_b = check_segment(set_b, rg_volume, d_sizes, d_faceareas)
+            #    seg_b, freeends_b = check_segment(set_b, rg_volume, d_sizes, d_facesegs)
             #    println("$b, $freeends_b")
             #    if length(freeends_b) > 0
             #        set_b = freeends_b
@@ -209,7 +209,7 @@ function process_rg(new_rg, segs, rg_volume, d_size, d_sem, considered, merge_gr
             for a in trunks
                 set_a = get(segs, a, Set([a]))
                 #if length(set_a) > 5
-                #    seg_a, freeends_a = check_segment(set_a, rg_volume, d_sizes, d_faceareas)
+                #    seg_a, freeends_a = check_segment(set_a, rg_volume, d_sizes, d_facesegs)
                 #    if length(freeends_a) > 0
                 #        set_a = freeends_a
                 #    end

@@ -110,11 +110,11 @@ function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends, 
     return processed
 end
 
-function match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faceareas, considered, merge_graph)
+function match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_facesegs, considered, merge_graph)
     pairs = []
     processed = Set{Int}()
     for s in keys(d_sizes)
-        if s in keys(d_faceareas)
+        if s in d_facesegs
             continue
         end
         if d_sizes[s] > 10000

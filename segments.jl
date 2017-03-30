@@ -37,82 +37,15 @@ function read_size(fn)
     return d_sizes
 end
 
-function process_faces(seg)
-    sz = size(seg)
-    rg_faces = DefaultOrderedDict{Int,Set{Int}}(()->Set{Int}())
-    d_faceareas = DefaultOrderedDict{Int,Int}(0)
-
-    face_segs = Dict("xy-"=>Set{Int}(), "xy+"=>Set{Int}(), "xz-"=>Set{Int}(), "xz+"=>Set{Int}(), "yz-"=>Set{Int}(), "yz+"=>Set{Int}())
-
-    for z in [1, sz[3]]
-        for y in 1:sz[2]
-            for x in 1:sz[1]
-                d_faceareas[seg[x,y,z]] += 1
-                if ( (x > 1) && seg[x-1,y,z]!=0 && seg[x,y,z]!=seg[x-1,y,z])
-                  p = minmax(seg[x,y,z], seg[x-1,y,z])
-                  push!(rg_faces[p[1]],p[2])
-                  push!(rg_faces[p[2]],p[1])
-                end
-                if ( (y > 1) && seg[x,y-1,z]!=0 && seg[x,y,z]!=seg[x,y-1,z])
-                  p = minmax(seg[x,y,z], seg[x,y-1,z])
-                  push!(rg_faces[p[1]],p[2])
-                  push!(rg_faces[p[2]],p[1])
-                end
-                if z == 1
-                    push!(face_segs["xy-"], seg[x,y,z])
-                else
-                    push!(face_segs["xy+"], seg[x,y,z])
-                end
-            end
+function find_facesegs(bboxes, chunk_bbox)
+    d_facesegs = Set{Int}()
+    for k in keys(bboxes)
+        bbox = bboxes[k]
+        if any(i->(bbox[i] == chunk_bbox[i]), 1:6)
+            push!(d_facesegs, k)
         end
     end
-
-    for z in 1:sz[3]
-        for y in [1,sz[2]]
-            for x in 1:sz[1]
-                d_faceareas[seg[x,y,z]] += 1
-                if ( (x > 1) && seg[x-1,y,z]!=0 && seg[x,y,z]!=seg[x-1,y,z])
-                  p = minmax(seg[x,y,z], seg[x-1,y,z])
-                  push!(rg_faces[p[1]],p[2])
-                  push!(rg_faces[p[2]],p[1])
-                end
-                if ( (z > 1) && seg[x,y,z-1]!=0 && seg[x,y,z]!=seg[x,y,z-1])
-                  p = minmax(seg[x,y,z], seg[x,y,z-1])
-                  push!(rg_faces[p[1]],p[2])
-                  push!(rg_faces[p[2]],p[1])
-                end
-                if y == 1
-                    push!(face_segs["xz-"], seg[x,y,z])
-                else
-                    push!(face_segs["xz+"], seg[x,y,z])
-                end
-            end
-        end
-    end
-
-    for z in 1:sz[3]
-        for y in 1:sz[2]
-            for x in [1,sz[1]]
-                d_faceareas[seg[x,y,z]] += 1
-                if ( (y > 1) && seg[x,y-1,z]!=0 && seg[x,y,z]!=seg[x,y-1,z])
-                  p = minmax(seg[x,y,z], seg[x,y-1,z])
-                  push!(rg_faces[p[1]],p[2])
-                  push!(rg_faces[p[2]],p[1])
-                end
-                if ( (z > 1) && seg[x,y,z-1]!=0 && seg[x,y,z]!=seg[x,y,z-1])
-                  p = minmax(seg[x,y,z], seg[x,y,z-1])
-                  push!(rg_faces[p[1]],p[2])
-                  push!(rg_faces[p[2]],p[1])
-                end
-                if x == 1
-                    push!(face_segs["yz-"], seg[x,y,z])
-                else
-                    push!(face_segs["yz+"], seg[x,y,z])
-                end
-            end
-        end
-    end
-    return rg_faces, face_segs, d_faceareas
+    return d_facesegs
 end
 
 function read_semantic(fn)
