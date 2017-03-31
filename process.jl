@@ -29,8 +29,6 @@ end
 axons = Dict{Int, Set{Int}}()
 free_ends = Dict{Int, Int}()
 small_pieces = Set{Int}()
-long_axons = Dict{Int, Set{Int}}()
-really_long_axons = Set{Int}()
 for l in l_segs
     if l[3] < 10000000 && l[2] > 5
         #ccsz = connected(intersect(keys(rg_faces), segs[l[1]]), rg_faces, d_facesegs)
@@ -43,12 +41,6 @@ for l in l_segs
             for s in axon_freeends
                 free_ends[s] = l[1]
             end
-            if l[2] > 20
-                long_axons[l[1]] = axon_freeends
-            end
-        end
-        if seg_type == "axon" && l[2] > 40
-            push!(really_long_axons, l[1])
         end
     elseif l[2] < 5
         if isempty(intersect(segs[l[1]], svInfo.boundarySupervoxels))
@@ -58,15 +50,13 @@ for l in l_segs
 end
 println("$(length(keys(axons))) axon candidates")
 println("$(length(small_pieces)) small pieces")
-println("$(length(keys(long_axons))) long axon candidates")
-println("$(length(really_long_axons)) really long axon candidates")
 #println(keys(axons))
 
 merge_graph1 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 merge_graph2 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 merge_graph3 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 considered = Set{Int}()
-union!(considered, match_long_axons(small_pieces, long_axons, segInfo.regionGraph, considered, true, merge_graph1))
+union!(considered, match_long_axons(small_pieces, axons, segInfo.regionGraph, considered, true, merge_graph1))
 union!(considered, match_axons(axons, segs, segInfo.regionGraph, svInfo.regionGraph, free_ends, considered, true, merge_graph1))
 union!(considered, process_rg(segInfo.regionGraph, segs, svInfo.regionGraph, svInfo.supervoxelSizes, svInfo.semanticInfo, considered, merge_graph1))
 matches = merge_edges(merge_graph1, th_tier1, segInfo.regionGraph)
