@@ -33,16 +33,16 @@ function check_edge(rg_volume, edge, seg1, seg2)
     return true
 end
 
-function match_axons(axons, segs, new_rg, rg_volume, free_ends, considered, is_strict, merge_graph)
+function match_axons(axons, segInfo, svInfo, free_ends, considered, is_strict, merge_graph)
     visited = Set{atomic_edge}()
     pairs = Int[]
     processed = Set{Int}()
     for a in keys(axons)
-        matches = intersect(keys(new_rg[a]),keys(axons))
+        matches = intersect(keys(segInfo.regionGraph[a]),keys(axons))
         #println("test: $a")
         for b in matches
             #println("test: $a, $b")
-            a_edge = new_rg[a][b]
+            a_edge = segInfo.regionGraph[a][b]
             if a_edge in visited
                 continue
             end
@@ -56,7 +56,7 @@ function match_axons(axons, segs, new_rg, rg_volume, free_ends, considered, is_s
             if is_strict && a_edge.sum/a_edge.num < reliable_th
                 continue
             end
-            if check_edge(rg_volume, a_edge, segs[a], segs[b])
+            if check_edge(svInfo.regionGraph, a_edge, segInfo.supervoxelDict[a], segInfo.supervoxelDict[b])
                 p = minmax(a,b)
                 println("$(p[1]), $(p[2])")
                 println(a_edge)
@@ -167,15 +167,16 @@ function match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faces
     return processed
 end
 
-function match_long_axons(small_pieces, long_axons, new_rg, considered, is_strict, merge_graph)
+function match_long_axons(small_pieces, long_axons, segInfo, considered, is_strict, merge_graph)
     processed = Set{Int}()
     pairs = Set{Int}()
+    rg = segInfo.regionGraph
     for s in small_pieces
-        neighboors = keys(new_rg[s])
+        neighboors = keys(rg[s])
         candidates = intersect(neighboors, keys(long_axons))
         axons = []
         for c in candidates
-            a_edge = new_rg[s][c]
+            a_edge = rg[s][c]
             free_end = a_edge.v1
             if !(free_end in long_axons[c])
                 free_end = a_edge.v2
@@ -190,7 +191,7 @@ function match_long_axons(small_pieces, long_axons, new_rg, considered, is_stric
         end
         if length(axons) > 1
             for p in combinations(axons,2)
-                if haskey(new_rg[p[1][1]],p[2][1])
+                if haskey(rg[p[1][1]],p[2][1])
                     continue
                 end
                 if is_strict && p[1][3].sum/p[1][3].num > reliable_th && p[2][3].sum/p[2][3].num > reliable_th

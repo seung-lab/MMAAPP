@@ -1,6 +1,7 @@
-function max_sem(clst, d_sem)
+function max_sem(clst, svInfo)
     max_seg = 0
     sem_max = zero(Float32)
+    d_sem = svInfo.semanticInfo
     for c in clst
         if d_sem[c][4] > sem_max
             sem_max = d_sem[c][4]
@@ -10,17 +11,19 @@ function max_sem(clst, d_sem)
     return max_seg, sem_max
 end
 
-function sum_sem(clst, d_sem)
+function sum_sem(clst, svInfo)
     total_sem = Float32[0,0,0,0]
+    d_sem = svInfo.semanticInfo
     for c in clst
         total_sem += d_sem[c]
     end
     return total_sem
 end
 
-function max_vol(clst, d_sizes)
+function max_vol(clst, svInfo)
     max_seg = 0
     vol_max = 0
+    d_sizes = svInfo.supervoxelSizes
     for c in clst
         if d_sizes[c] > vol_max
             vol_max = d_sizes[c]
@@ -30,8 +33,9 @@ function max_vol(clst, d_sizes)
     return max_seg, vol_max
 end
 
-function sum_vol(clst, d_sizes)
+function sum_vol(clst, svInfo)
     total_vol = 0
+    d_sizes = svInfo.supervoxelSizes
     for c in clst
         total_vol += d_sizes[c]
     end

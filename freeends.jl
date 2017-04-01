@@ -26,10 +26,11 @@ function check_connectivity(s, segment, rg_volume)
     return cc
 end
 
-function really_check_freeends(ends, segment, rg_volume, d_sizes, d_facesegs)
+function really_check_freeends(ends, segment, svInfo)
     free_ends = Set{Int}()
-    boundary_segs = d_facesegs
-    avg_vol = sum_vol(segment, d_sizes)/length(segment)
+    boundary_segs = svInfo.boundarySupervoxels
+    rg_volume = svInfo.regionGraph
+    avg_vol = sum_vol(segment, svInfo)/length(segment)
     for s in ends
         end_segment = Set{Int}()
         near_boundary = false
@@ -62,10 +63,11 @@ function really_check_freeends(ends, segment, rg_volume, d_sizes, d_facesegs)
     return free_ends
 end
 
-function check_segment2(segment, rg_volume, d_sizes, d_facesegs)
+function check_segment2(segment, svInfo)
     free_ends = Set{Int}()
     count = 0
-    total_vol = sum_vol(segment, d_sizes)
+    total_vol = sum_vol(segment, svInfo)
+    rg_volume = svInfo.regionGraph
     for s in segment
         cc = check_connectivity(Set{Int}(s), segment, rg_volume)
         if cc == 2
@@ -75,7 +77,7 @@ function check_segment2(segment, rg_volume, d_sizes, d_facesegs)
         end
     end
     #ends = setdiff(free_ends, keys(d_facesegs))
-    ends = really_check_freeends(free_ends, segment, rg_volume, d_sizes, d_facesegs)
+    ends = really_check_freeends(free_ends, segment, svInfo)
     if length(ends) > 3 && (count * 3 < length(segment))
         return "glial", ends
     end
@@ -86,13 +88,13 @@ function check_segment2(segment, rg_volume, d_sizes, d_facesegs)
     end
 end
 
-function check_segment(segment, rg_volume, d_sizes, d_facesegs)
+function check_segment(segment, svInfo)
     free_ends = Set{Int}()
     count = 0
-    total_vol = sum_vol(segment, d_sizes)
+    total_vol = sum_vol(segment, svInfo)
     for s in segment
-        cc = check_connectivity(Set{Int}(s), segment, rg_volume)
-        if total_vol > 1000000 && (cc > 2 && d_sizes[s] > 0.5*total_vol)
+        cc = check_connectivity(Set{Int}(s), segment, svInfo.regionGraph)
+        if total_vol > 1000000 && (cc > 2 && svInfo.supervoxelSizes[s] > 0.5*total_vol)
             return "dend", Set{Int}()
         end
         if cc == 2
@@ -102,7 +104,7 @@ function check_segment(segment, rg_volume, d_sizes, d_facesegs)
         end
     end
     #ends = setdiff(free_ends, keys(d_facesegs))
-    ends = really_check_freeends(free_ends, segment, rg_volume, d_sizes, d_facesegs)
+    ends = really_check_freeends(free_ends, segment, svInfo)
     if length(ends) > 3 && (count * 3 < length(segment))
         return "glial", Set{Int}()
     end
@@ -179,16 +181,16 @@ function find_ends(segs, head, rg_volume, d_sem)
     return tail
 end
 
-function find_ends_of_dend(seg, rg_volume, d_size, d_sem)
-    vol_seg = sum_vol(seg, d_size)
-    a, vol_max = max_vol(seg, d_size)
+function find_ends_of_dend(seg, svInfo)
+    vol_seg = sum_vol(seg, svInfo)
+    a, vol_max = max_vol(seg, svInfo)
     if vol_max < 0.5*vol_seg
         return Set{Int}()
     end
-    branches = setdiff(seg, Set{Int}([a]))
+    branches = setdiff(seg, Set{Int}(a))
     tails = Set{Int}()
-    for b in intersect(branches, keys(rg_volume[a]))
-        union!(tails, find_ends(branches,b,rg_volume,d_sem))
+    for b in intersect(branches, keys(svInfo.regionGraph[a]))
+        union!(tails, find_ends(branches,b,svInfo.regionGraph,svInfo.semanticInfo))
     end
     return tails
 end

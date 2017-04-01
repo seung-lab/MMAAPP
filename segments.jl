@@ -11,21 +11,21 @@ end
 
 typealias RegionGraph DefaultOrderedDict{Int, Dict{Int, atomic_edge}}
 typealias BoundingBoxes Dict{Int, Array{Int, 1}}
-typealias SupervoxelSize DefaultOrderedDict{Int,Int}
+typealias SupervoxelSizes DefaultOrderedDict{Int,Int}
 typealias SemanticInfo DefaultOrderedDict{Int,Array{Float32,1}}
 typealias SegmentDict Dict{Int,Int}
 typealias SupervoxelDict Dict{Int, Set{Int}}
-typealias BoundarySupervoxels Set{Int}
+typealias SupervoxelSet Set{Int}
 
 
 type SupervoxelInfo
     totalSupervoxels::Int64
     regionGraph::RegionGraph
     boundingBoxes::BoundingBoxes
-    supervoxelSizes::SupervoxelSize
+    supervoxelSizes::SupervoxelSizes
     semanticInfo::SemanticInfo
     segmentDict::SegmentDict
-    boundarySupervoxels::BoundarySupervoxels
+    boundarySupervoxels::SupervoxelSet
 end
 
 type SegmentInfo
@@ -45,7 +45,7 @@ end
 
 function read_size(fn)
     size_file = open(fn)
-    d_sizes = SupervoxelSize(0)
+    d_sizes = SupervoxelSizes(0)
     for ln in eachline(size_file)
         data = split(ln, " ")
         seg_id = parse(Int, data[1])
@@ -57,7 +57,7 @@ function read_size(fn)
 end
 
 function find_facesegs(bboxes, chunk_bbox)
-    d_facesegs = Set{Int}()
+    d_facesegs = SupervoxelSet()
     for k in keys(bboxes)
         bbox = bboxes[k]
         if any(i->(bbox[i] == chunk_bbox[i]), 1:6)

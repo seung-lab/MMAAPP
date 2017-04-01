@@ -20,7 +20,7 @@ l_segs = []
 
 segs = segInfo.supervoxelDict
 for k in keys(segs)
-    push!(l_segs, [k,length(segs[k]),sum_vol(segs[k], svInfo.supervoxelSizes),sum_sem(segs[k], svInfo.semanticInfo)])
+    push!(l_segs, [k,length(segs[k]),sum_vol(segs[k], svInfo),sum_sem(segs[k], svInfo)])
 end
 
 #sort!(l_segs, by=x->x[3]/x[2],rev=true)
@@ -33,7 +33,7 @@ for l in l_segs
     if l[3] < 10000000 && l[2] > 5
         #ccsz = connected(intersect(keys(rg_faces), segs[l[1]]), rg_faces, d_facesegs)
         #faces = faces_touched(segs[l[1]], face_segs)
-        seg_type, axon_freeends = check_segment(segs[l[1]], svInfo.regionGraph, svInfo.supervoxelSizes, svInfo.boundarySupervoxels)
+        seg_type, axon_freeends = check_segment(segs[l[1]], svInfo)
         if !isempty(axon_freeends) && length(axon_freeends) < 10
             println("segid: $(l[1]), parts: $(l[2]), size: $(l[3]), free_ends: $(length(axon_freeends)) ($(axon_freeends))")
             #push!(checks, [l[1], axon_freeends])
@@ -56,11 +56,11 @@ merge_graph1 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 merge_graph2 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 merge_graph3 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 considered = Set{Int}()
-union!(considered, match_long_axons(small_pieces, axons, segInfo.regionGraph, considered, true, merge_graph1))
-union!(considered, match_axons(axons, segs, segInfo.regionGraph, svInfo.regionGraph, free_ends, considered, true, merge_graph1))
-union!(considered, process_rg(segInfo.regionGraph, segs, svInfo.regionGraph, svInfo.supervoxelSizes, svInfo.semanticInfo, considered, merge_graph1))
+union!(considered, match_long_axons(small_pieces, axons, segInfo, considered, true, merge_graph1))
+union!(considered, match_axons(axons, segInfo, svInfo, free_ends, considered, true, merge_graph1))
+union!(considered, process_rg(segInfo, svInfo, considered, merge_graph1))
 matches = merge_edges(merge_graph1, th_tier1, segInfo.regionGraph)
-union!(considered, check_segs(segInfo.regionGraph, segInfo.supervoxelDict, svInfo.regionGraph, svInfo.supervoxelSizes, svInfo.semanticInfo, svInfo.boundarySupervoxels, svInfo.segmentDict, considered, merge_graph2))
+union!(considered, check_segs(segInfo, svInfo, considered, merge_graph2))
 
 #discard = match_long_axons(small_pieces, long_axons, new_rg, considered, false, merge_graph2)
 #union!(discard, match_axons(axons, segs, new_rg, free_ends, considered, false, merge_graph2))
