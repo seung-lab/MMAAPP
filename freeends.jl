@@ -63,39 +63,15 @@ function really_check_freeends(ends, segment, svInfo)
     return free_ends
 end
 
-function check_segment2(segment, svInfo)
-    free_ends = Set{Int}()
-    count = 0
-    total_vol = sum_vol(segment, svInfo)
-    rg_volume = svInfo.regionGraph
-    for s in segment
-        cc = check_connectivity(Set{Int}(s), segment, rg_volume)
-        if cc == 2
-            count += 1
-        elseif cc == 1
-            push!(free_ends, s)
-        end
-    end
-    #ends = setdiff(free_ends, keys(d_facesegs))
-    ends = really_check_freeends(free_ends, segment, svInfo)
-    if length(ends) > 3 && (count * 3 < length(segment))
-        return "glial", ends
-    end
-    if count * 2 > length(segment)
-        return "axon", ends
-    else
-        return "not sure", ends
-    end
-end
-
 function check_segment(segment, svInfo)
     free_ends = Set{Int}()
     count = 0
     total_vol = sum_vol(segment, svInfo)
+    seg_type = "not sure"
     for s in segment
         cc = check_connectivity(Set{Int}(s), segment, svInfo.regionGraph)
         if total_vol > 1000000 && (cc > 2 && svInfo.supervoxelSizes[s] > 0.5*total_vol)
-            return "dend", Set{Int}()
+            seg_type = "dend"
         end
         if cc == 2
             count += 1
@@ -105,13 +81,13 @@ function check_segment(segment, svInfo)
     end
     #ends = setdiff(free_ends, keys(d_facesegs))
     ends = really_check_freeends(free_ends, segment, svInfo)
-    if length(ends) > 3 && (count * 3 < length(segment))
-        return "glial", Set{Int}()
+    if seg_type == "not sure" && length(ends) > 3 && (count * 3 < length(segment))
+        seg_type = "glial"
     end
     if count * 2 > length(segment)
         return "axon", ends
     else
-        return "not sure", ends
+        return seg_type, ends
     end
 end
 

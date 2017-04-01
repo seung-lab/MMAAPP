@@ -93,7 +93,7 @@ function check_segs(segInfo, svInfo, considered, merge_graph)
         end
         current_seg = a
         while true
-            seg_a, freeends_a = check_segment2(set_a, svInfo)
+            seg_a, freeends_a = check_segment(set_a, svInfo)
             ends = intersect(freeends_a, tail)
             if length(set_a) < 3
                 ends = set_a
