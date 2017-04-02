@@ -34,7 +34,7 @@ for l in l_segs
         #ccsz = connected(intersect(keys(rg_faces), segs[l[1]]), rg_faces, d_facesegs)
         #faces = faces_touched(segs[l[1]], face_segs)
         seg_type, axon_freeends = check_segment(segs[l[1]], svInfo)
-        if !isempty(axon_freeends) && length(axon_freeends) < 10
+        if !isempty(axon_freeends) && length(axon_freeends) < 10 && (seg_type == "axon" || seg_type == "not sure")
             println("segid: $(l[1]), parts: $(l[2]), size: $(l[3]), free_ends: $(length(axon_freeends)) ($(axon_freeends))")
             #push!(checks, [l[1], axon_freeends])
             axons[l[1]] = axon_freeends
