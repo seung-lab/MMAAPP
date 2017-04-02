@@ -197,8 +197,8 @@ typedef struct atomic_edge
     uint64_t u1;
     uint64_t u2;
     double sum_aff;
-    uint64_t area;
-    explicit constexpr atomic_edge(uint64_t w1 = 0, uint64_t w2 = 0, double s_a = 0.0, uint64_t a = 0)
+    double area;
+    explicit constexpr atomic_edge(uint64_t w1 = 0, uint64_t w2 = 0, double s_a = 0.0, double a = 0)
         : u1(w1)
         , u2(w2)
         , sum_aff(s_a)
@@ -269,8 +269,8 @@ int main(int argc, char *argv[])
     for (std::size_t i = 0; i < n; ++i)
     {
         edge_t<mean_edge> e;
-        uint64_t u1, u2, area;
-        double sum_aff;
+        uint64_t u1, u2;
+        double sum_aff, area;
         std::cin >> e.v0 >> e.v1 >> e.w.sum >> e.w.num >> u1 >> u2 >> sum_aff >>  area;
         atomic_edge_t * ae = new atomic_edge_t(u1,u2,sum_aff,area);
         e.w.repr = ae;
