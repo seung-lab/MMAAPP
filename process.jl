@@ -16,35 +16,30 @@ th_tier3 = agg_threshold - 0.000025
 reliable_th = parse(Float64, ARGS[2])
 svInfo, segInfo = load_segments([1,1,1,2048,2048,256])
 
-l_segs = []
 
 segs = segInfo.supervoxelDict
-for k in keys(segs)
-    push!(l_segs, [k,length(segs[k]),sum_vol(segs[k], svInfo),sum_sem(segs[k], svInfo)])
-end
 
-#sort!(l_segs, by=x->x[3]/x[2],rev=true)
-
-#println("size of rg: $(length(keys(rg_faces)))")
 axons = Dict{Int, Set{Int}}()
 free_ends = Dict{Int, Int}()
 small_pieces = Set{Int}()
-for l in l_segs
-    if l[3] < 10000000 && l[2] > 5
+for a in keys(segs)
+    vol_a = sum_vol(segs[a], svInfo)
+    sem_a = sum_sem(segs[a], svInfo)
+    if vol_a < 10000000 && length(segs[a]) > 5
         #ccsz = connected(intersect(keys(rg_faces), segs[l[1]]), rg_faces, d_facesegs)
         #faces = faces_touched(segs[l[1]], face_segs)
-        seg_type, axon_freeends = check_segment(segs[l[1]], svInfo)
+        seg_type, axon_freeends = check_segment(segs[a], svInfo)
         if !isempty(axon_freeends) && length(axon_freeends) < 10 && (seg_type == "axon" || seg_type == "not sure")
-            println("segid: $(l[1]), parts: $(l[2]), size: $(l[3]), free_ends: $(length(axon_freeends)) ($(axon_freeends))")
+            println("segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(axon_freeends)) ($(axon_freeends))")
             #push!(checks, [l[1], axon_freeends])
-            axons[l[1]] = axon_freeends
+            axons[a] = axon_freeends
             for s in axon_freeends
-                free_ends[s] = l[1]
+                free_ends[s] = a
             end
         end
-    elseif l[2] < 5
-        if isempty(intersect(segs[l[1]], svInfo.boundarySupervoxels))
-            push!(small_pieces, l[1])
+    elseif length(segs[a]) < 5
+        if isempty(intersect(segs[a], svInfo.boundarySupervoxels))
+            push!(small_pieces, a)
         end
     end
 end
