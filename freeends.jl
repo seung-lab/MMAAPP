@@ -99,12 +99,14 @@ function connected(subset, rg, facesizes)
     return ccsz
 end
 
-function find_ends(segs, head, rg_volume, d_sem)
+function find_ends(segs, head, svInfo)
     visited = Set{Int}()
     queue = Queue(Int)
     enqueue!(queue, head)
     tails = Set{Int}([head])
     children = Set{Int}()
+    rg_volume = svInfo.regionGraph
+    d_sem = svInfo.semanticInfo
     while length(queue) > 0
         root = dequeue!(queue)
         if !(root in visited)
@@ -138,7 +140,7 @@ function find_ends_of_dend(seg, svInfo)
     branches = setdiff(seg, Set{Int}(a))
     tails = Set{Int}()
     for b in intersect(branches, keys(svInfo.regionGraph[a]))
-        union!(tails, find_ends(branches,b,svInfo.regionGraph,svInfo.semanticInfo))
+        union!(tails, find_ends(branches,b,svInfo))
     end
     return tails
 end

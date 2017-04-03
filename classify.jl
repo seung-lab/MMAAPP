@@ -164,7 +164,7 @@ function classify_segments(segInfo, svInfo)
                 anchor = intersect(branches, keys(svInfo.regionGraph[m]))
                 freeends = SupervoxelSet()
                 for b in anchor
-                    tails = setdiff(find_ends(branches,b,svInfo.regionGraph,svInfo.semanticInfo), svInfo.boundarySupervoxels)
+                    tails = setdiff(find_ends(branches,b,svInfo), svInfo.boundarySupervoxels)
                     union!(freeends, tails)
                     for t in tails
                         dendrites.segment[t] = a
@@ -181,7 +181,7 @@ function classify_segments(segInfo, svInfo)
                 println("spine: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends)) $(seg_type)")
                 push!(spines.segid, a)
                 spines.psd[a] = b
-                tails = find_ends(segs[a], b, svInfo.regionGraph, svInfo.semanticInfo)
+                tails = find_ends(segs[a], b, svInfo)
                 spines.freeends[a] = setdiff(intersect(freeends, tails), svInfo.boundarySupervoxels)
                 for t in spines.freeends[a]
                     spines.segment[t] = a

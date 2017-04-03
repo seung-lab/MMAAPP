@@ -23,9 +23,10 @@ function process_edge(set_a, set_b, svInfo)
     return max_aff
 end
 
-function match_segments(tails, set, trunks, rg_volume)
+function match_segments(tails, set, trunks, svInfo)
     max_mean = zero(Float64)
     target = zero(Int32)
+    rg_volume = svInfo.regionGraph
     for a in tails
         for b in keys(rg_volume[a])
             if b in set || !(b in trunks)
@@ -61,9 +62,9 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
             println("segid: $(current_seg), parts: $(length(set_a)), free_ends: $(ends) ($(b))")
             if 0 < length(ends) < 5
                 vol_a = sum_vol(set_a, svInfo)
-                target = match_segments(ends, set_a, keys(dendrites.segment), svInfo.regionGraph)
+                target = match_segments(ends, set_a, keys(dendrites.segment), svInfo)
                 if target == 0 && length(set_a) > 5
-                    target = match_segments(ends, set_a, keys(svInfo.regionGraph), svInfo.regionGraph)
+                    target = match_segments(ends, set_a, keys(svInfo.regionGraph), svInfo)
                 end
                 if target != 0
                     new_seg = get(svInfo.segmentDict, target, target)
@@ -81,7 +82,7 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
                             break
                         end
                         seg_type, freeends = check_segment(set_a, svInfo)
-                        tails = find_ends(set_a, b, svInfo.regionGraph, svInfo.semanticInfo)
+                        tails = find_ends(set_a, b, svInfo)
                         current_seg = new_seg
                         ends = setdiff(intersect(freeends, tails), svInfo.boundarySupervoxels)
                     else
