@@ -64,8 +64,7 @@ rootNodes = Dict{UInt32, Float32}()
 mst = MST(Array{UInt32,1}[], Array{Float32,1}())
 
 
-atomic_region_graph = DefaultDict(Int , Dict{Int , Real},
-                   ()->Dict{Int , Real}())
+atomic_region_graph = DefaultDict{Int , Dict{Int , Real}}(()->Dict{Int , Real}())
 
 open(ARGS[1]) do f
     for ln in eachline(f)
