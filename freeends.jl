@@ -131,7 +131,7 @@ function find_ends(segs, head, rg_volume, d_sem)
     visited = Set{Int}()
     queue = Queue(Int)
     enqueue!(queue, head)
-    tail = Set{Int}([head])
+    tails = Set{Int}([head])
     children = Set{Int}()
     while length(queue) > 0
         root = dequeue!(queue)
@@ -150,11 +150,11 @@ function find_ends(segs, head, rg_volume, d_sem)
             for c in children
                 enqueue!(queue, c)
             end
-            tail = children
+            tails = children
             children = Set{Int}()
         end
     end
-    return tail
+    return tails
 end
 
 function find_ends_of_dend(seg, svInfo)
