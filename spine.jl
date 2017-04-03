@@ -1,18 +1,3 @@
-function check_dend(segment, svInfo)
-    total_vol = sum_vol(segment, svInfo)
-    sem = sum_sem(segment, svInfo)
-    if total_vol < 1000000 || sem[2] < sem[1] || sem[2] < 0.5*total_vol
-        return false
-    end
-    for s in segment
-        cc = check_connectivity(Set{Int}(s), segment, svInfo.regionGraph)
-        if (cc > 2 && svInfo.supervoxelSizes[s] > 0.5*total_vol)
-            return true
-        end
-    end
-    return false
-end
-
 function process_edge(set_a, set_b, svInfo)
     max_aff = zero(Float64)
     rg_volume = svInfo.regionGraph
@@ -61,48 +46,22 @@ function match_segments(tails, set, trunks, rg_volume)
     end
 end
 
-function check_segs(segInfo, svInfo, considered, merge_graph)
-    spines = Set{Int}()
-    trunks = Dict{Int,Int}()
-    for l in keys(segInfo.supervoxelDict)
-        if check_dend(segInfo.supervoxelDict[l], svInfo)
-            tails = find_ends_of_dend(segInfo.supervoxelDict[l], svInfo)
-            for c in tails
-                trunks[c] = l
-            end
-        end
-    end
-
-    for a in keys(segInfo.regionGraph)
-        if a in considered
+function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considered, merge_graph)
+    processed = Set{Int}()
+    println("targets: $(keys(dendrites.segment))")
+    for a in spines.segid
+        if a in considered.segid
             continue
         end
         set_a = get(segInfo.supervoxelDict,a,Set{Int}(a))
-        vol_a = sum_vol(set_a, svInfo)
-        if length(set_a) > 100 || vol_a > 1000000
-            continue
-        end
-        sem_a = sum_sem(set_a, svInfo)
-        b, sem_max = max_sem(set_a, svInfo)
-        if sem_a[4] < 200
-            continue
-        end
-        tail = Set{Int}()
-        if sem_max > 0.5*sem_a[4]
-            tail = find_ends(set_a, b, svInfo.regionGraph, svInfo.semanticInfo)
-        end
         current_seg = a
+        ends = spines.freeends[a]
+        b = spines.psd[a]
         while true
-            seg_a, freeends_a = check_segment(set_a, svInfo)
-            ends = intersect(freeends_a, tail)
-            if length(set_a) < 3
-                ends = set_a
-            end
-            println("segid: $(current_seg), parts: $(length(set_a)), size: $(vol_a), free_ends: $(tail), $(freeends_a) ($(b))")
-            if 0 < length(ends) < 3
+            println("segid: $(current_seg), parts: $(length(set_a)), free_ends: $(ends) ($(b))")
+            if 0 < length(ends) < 5
                 vol_a = sum_vol(set_a, svInfo)
-                #println("segid: $(current_seg), parts: $(length(set_a)), size: $(vol_a), free_ends: $(ends) ($(b))")
-                target = match_segments(ends, set_a, keys(trunks), svInfo.regionGraph)
+                target = match_segments(ends, set_a, keys(dendrites.segment), svInfo.regionGraph)
                 if target == 0 && length(set_a) > 5
                     target = match_segments(ends, set_a, keys(svInfo.regionGraph), svInfo.regionGraph)
                 end
@@ -110,8 +69,8 @@ function check_segs(segInfo, svInfo, considered, merge_graph)
                     new_seg = get(svInfo.segmentDict, target, target)
                     push!(merge_graph[current_seg], new_seg)
                     push!(merge_graph[new_seg], current_seg)
-                    push!(spines, current_seg)
-                    push!(spines, target)
+                    push!(processed, current_seg)
+                    push!(processed, target)
                     println("merge: $(current_seg), $(new_seg) ($(ends), $target)")
                     new_seg_set = get(segInfo.supervoxelDict, new_seg, Set{Int}(new_seg))
                     if length(new_seg_set) < 5 && sum_vol(new_seg_set, svInfo) < 1000000
@@ -121,8 +80,10 @@ function check_segs(segInfo, svInfo, considered, merge_graph)
                         if new_b !== b
                             break
                         end
-                        tail = find_ends(set_a, b, svInfo.regionGraph, svInfo.semanticInfo)
+                        seg_type, freeends = check_segment(set_a, svInfo)
+                        tails = find_ends(set_a, b, svInfo.regionGraph, svInfo.semanticInfo)
                         current_seg = new_seg
+                        ends = setdiff(intersect(freeends, tails), svInfo.boundarySupervoxels)
                     else
                         break
                     end
@@ -130,13 +91,13 @@ function check_segs(segInfo, svInfo, considered, merge_graph)
                     break
                 end
             else
-                push!(spines, current_seg)
+                push!(processed, current_seg)
                 break
             end
         end
     end
-    println(spines)
-    return spines
+    println(processed)
+    return processed
 end
 
 function process_rg(segInfo, svInfo, considered, merge_graph)

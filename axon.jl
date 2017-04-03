@@ -32,12 +32,12 @@ function check_edge(rg_volume, edge, seg1, seg2)
     return true
 end
 
-function match_axons(axons, segInfo, svInfo, free_ends, considered, is_strict, merge_graph)
+function match_axons(axons, smallSegments, segInfo, svInfo, considered, merge_graph)
     visited = Set{atomic_edge}()
     pairs = Int[]
     processed = Set{Int}()
-    for a in keys(axons)
-        matches = intersect(keys(segInfo.regionGraph[a]),keys(axons))
+    for a in axons.segid
+        matches = intersect(keys(segInfo.regionGraph[a]),axons.segid)
         #println("test: $a")
         for b in matches
             #println("test: $a, $b")
@@ -46,13 +46,10 @@ function match_axons(axons, segInfo, svInfo, free_ends, considered, is_strict, m
                 continue
             end
             push!(visited, a_edge)
-            if !(a_edge.v1 in keys(free_ends)) || a_edge.v1 in considered
+            if !(a_edge.v1 in keys(axons.segment)) || a_edge.v1 in considered.segid
                 continue
             end
-            if !(a_edge.v2 in keys(free_ends)) || a_edge.v2 in considered
-                continue
-            end
-            if is_strict && a_edge.sum/a_edge.num < reliable_th
+            if !(a_edge.v2 in keys(axons.segment)) || a_edge.v2 in considered.segid
                 continue
             end
             if check_edge(svInfo.regionGraph, a_edge, segInfo.supervoxelDict[a], segInfo.supervoxelDict[b])
