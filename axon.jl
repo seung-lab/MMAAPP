@@ -17,7 +17,7 @@ function check_edge(rg_volume, edge, seg1, seg2)
     #if edge.num > 300 && edge.sum/edge.num < 0.15
     #    return false
     #end
-    if edge.sum/edge.num < reliable_th
+    if edge.aff/edge.area < reliable_th
         return false
     end
     len1 = length(intersect(seg2,neighboor1))
