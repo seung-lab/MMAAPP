@@ -12,7 +12,7 @@ function processln(l)
     parent = parse(Int, data[3])
     child1 = parse(Int, data[1])
     child2 = parse(Int, data[2])
-    weight = parse(Float32, data[4])/parse(Int, data[5])
+    weight = parse(Float32, data[4])/parse(Float32, data[5])
     u1 = parse(Int, data[6])
     u2 = parse(Int, data[7])
     if parent == child1
