@@ -17,18 +17,17 @@ function check_edge(rg_volume, edge, seg1, seg2)
     #if edge.num > 300 && edge.sum/edge.num < 0.15
     #    return false
     #end
+    if edge.sum/edge.num < reliable_th
+        return false
+    end
     len1 = length(intersect(seg2,neighboor1))
     len2 = length(intersect(seg1,neighboor2))
     if len1 == 1 && len2 == 1
-        if edge.num > 300 && edge.sum/edge.num < reliable_th
+        if edge.num > 1000
             return false
         end
     elseif len1 > 1 && len2 > 1
         return false
-    else
-        if edge.sum/edge.num < reliable_th
-            return false
-        end
     end
     return true
 end
