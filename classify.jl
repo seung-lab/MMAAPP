@@ -59,15 +59,15 @@ end
 const vol_threshold = 1000000
 
 function is_glial(sem, vol)
-    return sem[1] < 0.3*vol && sem[2] < 0.3*vol
+    return sem[1] < 0.5*vol && sem[2] < 0.5*vol
 end
 
 function is_dendrite(sem, vol)
-    return sem[2] > 0.7*vol && sem[2] > sem[1]
+    return sem[2] > 0.5*vol && sem[2] > sem[1]
 end
 
 function is_axon(sem, vol)
-    return sem[1] > 0.7*vol && sem[1] > sem[2]
+    return sem[1] > 0.5*vol && sem[1] > sem[2]
 end
 
 function find_psd(seg, svInfo)
@@ -118,12 +118,16 @@ function check_segment(segment, svInfo)
     end
     #ends = setdiff(free_ends, keys(d_facesegs))
     ends = really_check_freeends(free_ends, segment, svInfo)
-    if seg_type == "not sure" && length(ends) > 10 && (count * 3 < length(segment))
-        seg_type = "glial"
-    elseif length(ends) > 10
-        seg_type = "dendrite"
-    elseif count * 2 > length(segment)
-        seg_type = "axon"
+    if seg_type == "not sure"
+        if length(ends) > 10
+            if count * 3 < length(segment)
+                seg_type = "glial"
+            else
+                seg_type = "dendrite"
+            end
+        elseif count * 2 > length(segment)
+            seg_type = "axon"
+        end
     end
     return seg_type, ends
 end
