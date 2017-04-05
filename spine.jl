@@ -49,7 +49,11 @@ end
 
 function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considered, merge_graph)
     processed = Set{Int}()
-    println("targets: $(keys(dendrites.segment))")
+    shafts = Set{Int}()
+    for s in dendrites.segid
+        push!(shafts, dendrites.shaft[s])
+    end
+    dendrite_ends = union(keys(dendrites.segment),shafts)
     for a in spines.segid
         if a in considered.segid
             continue
@@ -62,7 +66,7 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
             println("segid: $(current_seg), parts: $(length(set_a)), free_ends: $(ends) ($(b))")
             if 0 < length(ends) < 5
                 vol_a = sum_vol(set_a, svInfo)
-                target = match_segments(ends, set_a, keys(dendrites.segment), svInfo)
+                target = match_segments(ends, set_a, dendrite_ends, svInfo)
                 if target == 0 && length(set_a) > 5
                     target = match_segments(ends, set_a, keys(svInfo.regionGraph), svInfo)
                 end
