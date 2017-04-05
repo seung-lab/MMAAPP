@@ -147,9 +147,12 @@ function classify_segments(segInfo, svInfo)
         if length(segs[a]) >= 5
             seg_type, freeends = check_segment(segs[a], svInfo)
             println("segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends)) $seg_type")
-            if seg_type == "glial"
+            if seg_type == "glial" && length(segs[a]) > 30
                 push!(processedSegments.segid, a)
                 continue
+            end
+            if length(segs[a]) <= 30 && vol_a < vol_threshold
+                push!(smallSegments.segid, a)
             end
             if vol_a < vol_threshold*10 && !isempty(freeends) && (seg_type == "axon" || seg_type == "not sure")
                 println("axon: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends))")
@@ -192,17 +195,12 @@ function classify_segments(segInfo, svInfo)
                     spines.anchor[t] = b
                 end
             end
-            if length(segs[a]) < 30
-                push!(smallSegments.segid, a)
-            end
         elseif length(segs[a]) < 5 && vol_a < vol_threshold
-            if is_glial(sum_sem(segs[a], svInfo), sum_vol(segs[a], svInfo))
-                push!(processedSegments.segid, a)
-                continue
-            end
-            if isempty(intersect(segs[a], svInfo.boundarySupervoxels))
-                push!(smallSegments.segid, a)
-            end
+            #if is_glial(sum_sem(segs[a], svInfo), sum_vol(segs[a], svInfo))
+            #    push!(processedSegments.segid, a)
+            #    continue
+            #end
+            push!(smallSegments.segid, a)
             b = find_psd(segs[a], svInfo)
             if b != 0
                 push!(spines.segid, a)
@@ -216,10 +214,10 @@ function classify_segments(segInfo, svInfo)
         end
     end
     for a in setdiff(keys(segInfo.regionGraph), keys(segs))
-        if is_glial(svInfo.semanticInfo[a], svInfo.supervoxelSizes[a])
-            push!(processedSegments.segid, a)
-            continue
-        end
+        #if is_glial(svInfo.semanticInfo[a], svInfo.supervoxelSizes[a])
+        #    push!(processedSegments.segid, a)
+        #    continue
+        #end
         push!(smallSegments.segid, a)
         if svInfo.semanticInfo[a][4] > 200
             push!(spines.segid, a)
