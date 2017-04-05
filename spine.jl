@@ -78,7 +78,7 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
                     push!(processed, target)
                     println("merge: $(current_seg), $(new_seg) ($(ends), $target)")
                     new_seg_set = get(segInfo.supervoxelDict, new_seg, Set{Int}(new_seg))
-                    if length(new_seg_set) < 5 && sum_vol(new_seg_set, svInfo) < 1000000
+                    if length(new_seg_set) < 5 && sum_vol(new_seg_set, svInfo) < vol_threshold
                         println("keep searching: $new_seg, $target")
                         union!(set_a, new_seg_set)
                         new_b, sem_max = max_sem(set_a, svInfo)
