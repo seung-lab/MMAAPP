@@ -26,7 +26,7 @@ merge_graph3 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
 considered = Set{Int}()
 #union!(considered, match_long_axons(small_pieces, axons, segInfo, considered, true, merge_graph1))
 union!(processedSegments.segid, match_axons(axons, smallSegments, segInfo, svInfo, processedSegments, merge_graph1))
-#union!(considered, process_rg(segInfo, svInfo, considered, merge_graph1))
+union!(processedSegments.segid, process_rg(axons, dendrites, smallSegments, segInfo, svInfo, processedSegments, merge_graph1))
 matches = merge_edges(merge_graph1, th_tier1, segInfo.regionGraph)
 union!(processedSegments.segid, check_segs(dendrites, spines, smallSegments, segInfo, svInfo, processedSegments, merge_graph2))
 

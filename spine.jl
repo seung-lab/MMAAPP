@@ -101,46 +101,27 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
     return processed
 end
 
-function process_rg(segInfo, svInfo, considered, merge_graph)
+function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered, merge_graph)
     visited = Set{atomic_edge}()
     dend_candidates = Set{Int}()
-    spine_candidates = Set{Int}()
-    trunks = Set{Int}()
-    for l in keys(segInfo.supervoxelDict)
-        if check_dend(segInfo.supervoxelDict[l], svInfo) && !(l in considered)
-            push!(trunks, l)
-        end
-    end
+    attached = Set{Int}()
     keep = true
     while keep
         keep = false
-        for b in setdiff(keys(segInfo.regionGraph), spine_candidates)
+        for b in setdiff(smallSegments.segid, attached)
             set_b = get(segInfo.supervoxelDict, b, Set([b]))
-            if (length(set_b) > 30 || sum_vol(set_b, svInfo) > 1000000) || b in considered
+            if b in considered.segid
                 continue
             end
             sem_b = sum_sem(set_b, svInfo)
             vol_b = sum_vol(set_b, svInfo)
-            if sem_b[2] < sem_b[1] || sem_b[2] < 0.3*vol_b
+            if length(set_b) > 10 && !is_dendrite(sem_b, vol_b)
                 continue
             end
-            #if length(set_b) > 5
-            #    seg_b, freeends_b = check_segment(set_b, rg_volume, d_sizes, d_facesegs)
-            #    println("$b, $freeends_b")
-            #    if length(freeends_b) > 0
-            #        set_b = freeends_b
-            #    end
-            #end
             max_a = zero(Int)
             max_aff = zero(Float64)
-            for a in trunks
-                set_a = get(segInfo.supervoxelDict, a, Set([a]))
-                #if length(set_a) > 5
-                #    seg_a, freeends_a = check_segment(set_a, rg_volume, d_sizes, d_facesegs)
-                #    if length(freeends_a) > 0
-                #        set_a = freeends_a
-                #    end
-                #end
+            for a in dendrites.segid
+                set_a = get(segInfo.supervoxelDict, a, Set{Int}(a))
                 tmp = process_edge(set_a, set_b, svInfo)
                 if tmp > reliable_th && tmp > max_aff
                     max_aff = tmp
@@ -149,17 +130,20 @@ function process_rg(segInfo, svInfo, considered, merge_graph)
             end
             if max_aff > reliable_th
                 push!(dend_candidates,max_a)
-                push!(spine_candidates,b)
+                push!(attached,b)
                 push!(merge_graph[max_a],b)
                 push!(merge_graph[b],max_a)
-                push!(segs[max_a], b)
+                println("merge: $(b), $(max_a)")
+                set_a = get(segInfo.supervoxelDict, max_a, Set{Int}(max_a))
+                push!(set_a, b)
+                segInfo.supervoxelDict[max_a] = set_a
                 keep = true
             end
         end
     end
     println("dend candidates:")
-    println("$dend_candidates, $(length(spine_candidates))")
-    return spine_candidates
+    println("$dend_candidates, $(length(attached))")
+    return attached
 end
 
 
