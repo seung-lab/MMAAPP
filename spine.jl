@@ -62,12 +62,17 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
         current_seg = a
         ends = spines.freeends[a]
         b = spines.psd[a]
+        target = 0
         while true
             println("segid: $(current_seg), parts: $(length(set_a)), free_ends: $(ends) ($(b))")
             if 0 < length(ends) < 5
                 vol_a = sum_vol(set_a, svInfo)
-                target = match_segments(ends, set_a, dendrite_ends, svInfo)
-                if target == 0 && length(set_a) > 5
+                if length(set_a) >= 3
+                    target = match_segments(ends, set_a, dendrite_ends, svInfo)
+                else
+                    target = match_segments(ends, set_a, keys(dendrites.segment), svInfo)
+                end
+                if target == 0 && length(set_a) >= 5
                     target = match_segments(ends, set_a, keys(svInfo.regionGraph), svInfo)
                 end
                 if target != 0
