@@ -40,6 +40,7 @@ function read_bboxes(fn)
         data = [parse(Int,x) for x in split(ln, " ")]
         bboxes[data[1]] = data[2:end]
     end
+    close(bbox_file)
     return bboxes
 end
 
@@ -79,6 +80,7 @@ function read_semantic(fn)
         psd = parse(Float32,data[5])
         d_sem[seg_id]=[axon,dend,glial,psd]
     end
+    close(sem_file)
     return d_sem
 end
 
@@ -133,6 +135,7 @@ function agglomerate(fn)
             # the first one is child, the second one is parent
             pd[entry[2]] = entry[1]
     end
+    close(mst)
 
     # find the root id
     for (c,p) in pd
