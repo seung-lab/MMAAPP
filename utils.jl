@@ -71,6 +71,10 @@ function expand_bbox(bbox, delta)
     end
 end
 
+function center_bbox(bbox)
+    return (bbox[1:3].+bbox[4:6])/2
+end
+
 function overlap_bbox(b1, b2)
     si = max(0, min(b1[4], b2[4]) - max(b1[1], b2[1])) * max(0, min(b1[5], b2[5]) - max(b1[2], b2[2])) * max(0, min(b1[6], b2[6]) - max(b1[3], b2[3]))
     if si > 0
