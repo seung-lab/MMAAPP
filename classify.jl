@@ -103,32 +103,30 @@ function check_segment(segment, svInfo)
     free_ends = Set{Int}()
     count = 0
     total_vol = sum_vol(segment, svInfo)
+    largest_s, vol_max = max_vol(segment, svInfo)
     seg_type = check_semantic(segment, svInfo)
+    cc = check_connectivity(Set{Int}(largest_s), segment, svInfo.regionGraph)
+    if total_vol > vol_threshold && (cc > 2 && vol_max > 0.5*total_vol) && seg_type == "not sure"
+        seg_type = "dendrite"
+    end
     #seg_type = "not sure"
-    for s in segment
-        cc = check_connectivity(Set{Int}(s), segment, svInfo.regionGraph)
-        if total_vol > vol_threshold && (cc > 2 && svInfo.supervoxelSizes[s] > 0.5*total_vol) && seg_type == "not sure"
-            seg_type = "dendrite"
-        end
-        if cc == 2
-            count += 1
-        elseif cc == 1
-            push!(free_ends, s)
-        end
+    free_ends = find_ends(segment, largest_s, svInfo)
+    if cc == 1
+        push!(free_ends, largest_s)
     end
     #ends = setdiff(free_ends, keys(d_facesegs))
     ends = really_check_freeends(free_ends, segment, svInfo)
-    if seg_type == "not sure"
-        if length(ends) > 10
-            if count * 3 < length(segment)
-                seg_type = "glial"
-            else
-                seg_type = "dendrite"
-            end
-        elseif count * 2 > length(segment)
-            seg_type = "axon"
-        end
-    end
+    #if seg_type == "not sure"
+    #    if length(ends) > 10
+    #        if count * 3 < length(segment)
+    #            seg_type = "glial"
+    #        else
+    #            seg_type = "dendrite"
+    #        end
+    #    elseif count * 2 > length(segment)
+    #        seg_type = "axon"
+    #    end
+    #end
     return seg_type, ends
 end
 
