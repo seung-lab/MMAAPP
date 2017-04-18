@@ -103,30 +103,40 @@ function find_ends(segs, head, svInfo)
     visited = Set{Int}()
     queue = Queue(Int)
     enqueue!(queue, head)
-    tails = Set{Int}([head])
+    tails = Set{Int}()
     children = Set{Int}()
     rg_volume = svInfo.regionGraph
     d_sem = svInfo.semanticInfo
+    depth = 0
     while length(queue) > 0
         root = dequeue!(queue)
         if !(root in visited)
-            if root != head && d_sem[root][4] > 500
-                return Set{Int}()
-            end
             push!(visited, root)
+            is_end = true
             for neighboor in keys(rg_volume[root])
-                if (!(neighboor in visited)) && neighboor in segs
+                if !(neighboor in visited) && !(neighboor in queue) && neighboor in segs
                     push!(children, neighboor)
+                    is_end = false
                 end
+            end
+            if root != head && d_sem[root][4] > 500
+                is_end = false
+            end
+            if is_end
+                push!(tails, root)
             end
         end
         if length(queue) == 0 && length(children) > 0
             for c in children
                 enqueue!(queue, c)
             end
-            tails = children
+            #tails = children
             children = Set{Int}()
+            depth += 1
         end
+    end
+    if length(tails) == 0 && depth <= 1
+        push!(tails, head)
     end
     return tails
 end
