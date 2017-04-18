@@ -64,7 +64,7 @@ struct heapable_edge
 
 template <class T, class Compare = std::greater<T>, class Plus = std::plus<T>,
           class Limits = std::numeric_limits<T>>
-inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
+inline void agglomerate(std::vector<edge_t<T>> const& rg,
                                          T const& threshold, uint64_t const n)
 {
     Compare comp;
@@ -158,20 +158,6 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
         }
     }
 
-    std::vector<uint64_t> remaps(n, std::numeric_limits<uint64_t>::max());
-
-    uint64_t next = 0;
-
-    for (uint64_t i = 0; i < n; ++i)
-    {
-        auto s = sets.find_set(i);
-        if (remaps[s] == std::numeric_limits<uint64_t>::max())
-        {
-            remaps[s] = next++;
-        }
-        remaps[i] = remaps[s];
-    }
-
     of.close();
 
     //std::cout << "Total of " << next << " segments\n";
@@ -189,7 +175,7 @@ inline std::vector<uint64_t> agglomerate(std::vector<edge_t<T>> const& rg,
     }
     of.close();
 
-    return remaps;
+    return;
 }
 
 typedef struct atomic_edge
@@ -277,7 +263,7 @@ int main(int argc, char *argv[])
         rg.push_back(e);
     }
 
-    auto res = agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
+    agglomerate<mean_edge, mean_edge_greater, mean_edge_plus,
                            mean_edge_limits>(rg, mean_edge(th, 1), v);
 
     //for (auto& e : res)
