@@ -99,7 +99,7 @@ function connected(subset, rg, facesizes)
     return ccsz
 end
 
-function find_ends(segs, head, svInfo)
+function find_ends(segs, head, svInfo; free=true)
     visited = Set{Int}()
     queue = Queue(Int)
     enqueue!(queue, head)
@@ -130,7 +130,9 @@ function find_ends(segs, head, svInfo)
             for c in children
                 enqueue!(queue, c)
             end
-            #tails = children
+            if !free
+                tails = children
+            end
             children = Set{Int}()
             depth += 1
         end

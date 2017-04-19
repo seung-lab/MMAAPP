@@ -189,7 +189,7 @@ function classify_segments(segInfo, svInfo)
                 println("spine: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends)) $(seg_type)")
                 push!(spines.segid, a)
                 spines.psd[a] = b
-                tails = find_ends(segs[a], b, svInfo)
+                tails = find_ends(segs[a], b, svInfo;free=false)
                 spines.freeends[a] = setdiff(intersect(freeends, tails), svInfo.boundarySupervoxels)
                 for t in spines.freeends[a]
                     spines.segment[t] = a

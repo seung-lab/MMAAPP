@@ -91,7 +91,7 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
                             break
                         end
                         seg_type, freeends = check_segment(set_a, svInfo)
-                        tails = find_ends(set_a, b, svInfo)
+                        tails = find_ends(set_a, b, svInfo;free=false)
                         current_seg = new_seg
                         ends = setdiff(intersect(freeends, tails), svInfo.boundarySupervoxels)
                     else
