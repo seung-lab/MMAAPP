@@ -152,7 +152,7 @@ function classify_segments(segInfo, svInfo)
             if length(segs[a]) <= 30 && vol_a < vol_threshold
                 push!(smallSegments.segid, a)
             end
-            if vol_a < vol_threshold*10 && !isempty(freeends) && (seg_type == "axon" || seg_type == "not sure")
+            if !isempty(freeends) && (seg_type == "axon" || seg_type == "not sure")
                 println("axon: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends))")
                 push!(axons.segid, a)
                 axons.freeends[a] = freeends
