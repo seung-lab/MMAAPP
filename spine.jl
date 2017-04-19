@@ -114,9 +114,9 @@ function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered
     visited = Set{atomic_edge}()
     dend_candidates = dendrites.segid
     attached = Set{Int}()
-    keep = true
-    while keep
-        keep = false
+    keep_going = true
+    while keep_going
+        keep_going = false
         new_candidates = Set{Int}()
         for b in setdiff(smallSegments.segid, attached)
             set_b = get(segInfo.supervoxelDict, b, Set([b]))
@@ -147,7 +147,7 @@ function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered
                 set_a = get(segInfo.supervoxelDict, max_a, Set{Int}(max_a))
                 push!(set_a, b)
                 segInfo.supervoxelDict[max_a] = set_a
-                keep = true
+                keep_going = true
             end
         end
         dend_candidates = new_candidates
