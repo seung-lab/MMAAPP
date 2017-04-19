@@ -112,11 +112,12 @@ end
 
 function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered, merge_graph)
     visited = Set{atomic_edge}()
-    dend_candidates = Set{Int}()
+    dend_candidates = dendrites.segid
     attached = Set{Int}()
     keep = true
     while keep
         keep = false
+        new_candidates = Set{Int}()
         for b in setdiff(smallSegments.segid, attached)
             set_b = get(segInfo.supervoxelDict, b, Set([b]))
             if b in considered.segid
@@ -129,7 +130,7 @@ function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered
             end
             max_a = zero(Int)
             max_aff = zero(Float64)
-            for a in dendrites.segid
+            for a in intersect(keys(segInfo.regionGraph[b]), dend_candidates)
                 set_a = get(segInfo.supervoxelDict, a, Set{Int}(a))
                 tmp = process_edge(set_a, set_b, svInfo)
                 if tmp > reliable_th && tmp > max_aff
@@ -138,7 +139,7 @@ function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered
                 end
             end
             if max_aff > reliable_th
-                push!(dend_candidates,max_a)
+                push!(new_candidates,b)
                 push!(attached,b)
                 push!(merge_graph[max_a],b)
                 push!(merge_graph[b],max_a)
@@ -149,6 +150,7 @@ function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered
                 keep = true
             end
         end
+        dend_candidates = new_candidates
     end
     println("dend candidates:")
     println("$dend_candidates, $(length(attached))")
