@@ -106,8 +106,11 @@ function check_segment(segment, svInfo)
     largest_s, vol_max = max_vol(segment, svInfo)
     seg_type = check_semantic(segment, svInfo)
     cc = check_connectivity(Set{Int}(largest_s), segment, svInfo.regionGraph)
-    if total_vol > vol_threshold && (cc > 2 && vol_max > 0.5*total_vol) && seg_type == "not sure"
-        seg_type = "dendrite"
+    if total_vol > vol_threshold && (cc > 2 && vol_max > 0.5*total_vol)
+        if seg_type == "not sure"
+            seg_type = "dendrite"
+        end
+        return seg_type, free_ends
     end
     #seg_type = "not sure"
     free_ends = find_ends(segment, largest_s, svInfo)
