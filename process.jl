@@ -1,5 +1,3 @@
-using HDF5
-using EMIRT
 using DataStructures
 using Combinatorics
 include("segments.jl")
