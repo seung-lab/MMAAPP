@@ -36,7 +36,8 @@ end
 function read_bboxes(fn)
     bbox_file = open(fn)
     bboxes = BoundingBoxes()
-    for ln in eachline(bbox_file)
+    lines = readlines(bbox_file)
+    for ln in lines
         data = [parse(Int,x) for x in split(ln, " ")]
         bboxes[data[1]] = data[2:end]
     end
@@ -47,8 +48,9 @@ end
 function read_size(fn)
     size_file = open(fn)
     d_sizes = SupervoxelSizes(0)
-    for ln in eachline(size_file)
-        data = split(ln, " ")
+    lines = readlines(size_file)
+    for ln in lines
+        data = split(ln)
         seg_id = parse(Int, data[1])
         sz = parse(Int,data[2])
         d_sizes[seg_id] = sz
@@ -71,8 +73,9 @@ end
 function read_semantic(fn)
     sem_file = open(fn)
     d_sem = SemanticInfo(()-> Float32[])
-    for ln in eachline(sem_file)
-        data = split(ln, " ")
+    lines = readlines(sem_file)
+    for ln in lines
+        data = split(ln)
         seg_id = parse(Int, data[1])
         axon = parse(Float32,data[2])
         dend = parse(Float32,data[3])
@@ -88,8 +91,9 @@ function read_rg(fn, pd)
     rg_file = open(fn)
     rg_volume = RegionGraph(()->Dict{Int, atomic_edge}())
     num_seg = 0
-    for ln in eachline(rg_file)
-        data = split(ln, " ")
+    lines = readlines(rg_file)
+    for ln in lines
+        data = split(ln)
         if length(data) == 3
             num_seg = parse(Int, data[2])
             continue
@@ -130,7 +134,8 @@ function agglomerate(fn)
     pd = SegmentDict()
     segs = SupervoxelDict()
     mst = open(fn)
-    for l in eachline(mst)
+    lines = readlines(mst)
+    for l in lines
         entry = mst_entry(l)
             # the first one is child, the second one is parent
             pd[entry[2]] = entry[1]
