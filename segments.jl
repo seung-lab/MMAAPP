@@ -87,30 +87,34 @@ function read_semantic(fn)
     return d_sem
 end
 
+function read_rg_line(ln)
+    types = (Int, Int, Float64, Float64, Int, Int, Float64, Float64)
+    ss = split(ln)
+    return atomic_edge(ntuple(i->parse(types[i],ss[i]),8)...)
+end
+
 function read_rg(fn, pd)
     rg_file = open(fn)
     rg_volume = RegionGraph(()->Dict{Int, atomic_edge}())
     num_seg = 0
     lines = readlines(rg_file)
-    for ln in lines
-        data = split(ln)
-        if length(data) == 3
-            num_seg = parse(Int, data[2])
-            continue
-        end
-        u1 = parse(Int, data[5])
-        u2 = parse(Int, data[6])
-        aff = parse(Float64, data[7])
-        area = parse(Float64, data[8])
-        s = parse(Float64, data[3])
-        n = parse(Float64, data[4])
-        p1 = parse(Int, data[1])
-        p2 = parse(Int, data[2])
-        a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
+    data = split(lines[1])
+    num_seg = parse(Int, data[2])
+    for ln in lines[2:end]
+        a_edge = read_rg_line(ln)
+        #u1 = parse(Int, data[5])
+        #u2 = parse(Int, data[6])
+        #aff = parse(Float64, data[7])
+        #area = parse(Float64, data[8])
+        #s = parse(Float64, data[3])
+        #n = parse(Float64, data[4])
+        #p1 = parse(Int, data[1])
+        #p2 = parse(Int, data[2])
+        #a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
         #p1 = get(pd, u1, u1)
         #p2 = get(pd, u2, u2)
-        rg_volume[p1][p2] = a_edge
-        rg_volume[p2][p1] = a_edge
+        rg_volume[a_edge.p1][a_edge.p2] = a_edge
+        rg_volume[a_edge.p2][a_edge.p1] = a_edge
     end
     close(rg_file)
     return num_seg,rg_volume
