@@ -59,7 +59,7 @@ end
 const vol_threshold = 1000000
 
 function is_glial(sem, vol)
-    return sem[1] < 0.5*vol && sem[2] < 0.5*vol
+    return sem[3] > 0.5*vol
 end
 
 function is_dendrite(sem, vol)
