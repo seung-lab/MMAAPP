@@ -77,6 +77,9 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
                 end
                 if target != 0
                     new_seg = get(svInfo.segmentDict, target, target)
+                    if new_seg in considered.segid
+                        break
+                    end
                     push!(merge_graph[current_seg], new_seg)
                     push!(merge_graph[new_seg], current_seg)
                     push!(processed, current_seg)
