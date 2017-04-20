@@ -90,7 +90,7 @@ end
 function read_rg_line(ln)
     types = (Int, Int, Float64, Float64, Int, Int, Float64, Float64)
     ss = split(ln)
-    return ntuple(i->parse(types[i],ss[i]),8)
+    return atomic_edge(ntuple(i->parse(types[i],ss[i]),8)...)
 end
 
 function read_rg(fn, pd)
@@ -100,20 +100,13 @@ function read_rg(fn, pd)
     data = split(lines[1])
     num_seg = parse(Int, data[2])
     num_edge = parse(Int, data[3])
-    p1s = Array{Int}(num_edge)
-    p2s = Array{Int}(num_edge)
-    u1s = Array{Int}(num_edge)
-    u2s = Array{Int}(num_edge)
-    ss = Array{Float64}(num_edge)
-    ns = Array{Float64}(num_edge)
-    affs = Array{Float64}(num_edge)
-    areas = Array{Float64}(num_edge)
     println("Number of threads = $(nthreads())")
+    edges = Array{atomic_edge}(num_edge)
     @threads for i in 1:num_edge
-        p1s[i],p2s[i],ss[i],ns[i],u1s[i],u2s[i],affs[i],areas[i] = read_rg_line(lines[i+1])
+        edges[i] = read_rg_line(lines[i+1])
     end
     for i in 1:num_edge
-        a_edge = atomic_edge(p1s[i],p2s[i],ss[i],ns[i],u1s[i],u2s[i],affs[i],areas[i])
+        a_edge = edges[i]
         rg_volume[a_edge.p1][a_edge.p2] = a_edge
         rg_volume[a_edge.p2][a_edge.p1] = a_edge
     end
