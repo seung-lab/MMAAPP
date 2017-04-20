@@ -1,3 +1,4 @@
+using Base.Threads
 type atomic_edge
     p1::Int
     p2::Int
@@ -90,29 +91,30 @@ end
 function read_rg_line(ln)
     types = (Int, Int, Float64, Float64, Int, Int, Float64, Float64)
     ss = split(ln)
-    return atomic_edge(ntuple(i->parse(types[i],ss[i]),8)...)
+    return ntuple(i->parse(types[i],ss[i]),8)
 end
 
 function read_rg(fn, pd)
     rg_file = open(fn)
     rg_volume = RegionGraph(()->Dict{Int, atomic_edge}())
-    num_seg = 0
     lines = readlines(rg_file)
     data = split(lines[1])
     num_seg = parse(Int, data[2])
-    for ln in lines[2:end]
-        a_edge = read_rg_line(ln)
-        #u1 = parse(Int, data[5])
-        #u2 = parse(Int, data[6])
-        #aff = parse(Float64, data[7])
-        #area = parse(Float64, data[8])
-        #s = parse(Float64, data[3])
-        #n = parse(Float64, data[4])
-        #p1 = parse(Int, data[1])
-        #p2 = parse(Int, data[2])
-        #a_edge = atomic_edge(p1,p2,s,n,u1,u2,aff,area)
-        #p1 = get(pd, u1, u1)
-        #p2 = get(pd, u2, u2)
+    num_edge = parse(Int, data[3])
+    p1s = Array{Int}(num_edge)
+    p2s = Array{Int}(num_edge)
+    u1s = Array{Int}(num_edge)
+    u2s = Array{Int}(num_edge)
+    ss = Array{Float64}(num_edge)
+    ns = Array{Float64}(num_edge)
+    affs = Array{Float64}(num_edge)
+    areas = Array{Float64}(num_edge)
+    println("Number of threads = $(nthreads())")
+    @threads for i in 1:num_edge
+        p1s[i],p2s[i],ss[i],ns[i],u1s[i],u2s[i],affs[i],areas[i] = read_rg_line(lines[i+1])
+    end
+    for i in 1:num_edge
+        a_edge = atomic_edge(p1s[i],p2s[i],ss[i],ns[i],u1s[i],u2s[i],affs[i],areas[i])
         rg_volume[a_edge.p1][a_edge.p2] = a_edge
         rg_volume[a_edge.p2][a_edge.p1] = a_edge
     end
@@ -172,8 +174,8 @@ function agglomerate(fn)
 end
 
 function load_segments(chunk_bbox)
-    segs, pd = agglomerate("test_mst.in")
     num_seg, rg_volume = read_rg("rg_volume.in", Dict{UInt32,UInt32}())
+    segs, pd = agglomerate("test_mst.in")
     d_sizes = read_size("sv_size.in")
     d_sem = read_semantic("sem_volume.in")
     #rg_faces, face_segs, d_facesegs = process_faces(sgm.segmentation)
