@@ -1,4 +1,3 @@
-using Base.Threads
 type atomic_edge
     p1::Int
     p2::Int

@@ -101,7 +101,10 @@ end
 
 function check_segment(segment, svInfo)
     free_ends = Set{Int}()
-    count = 0
+    seg_type = ""
+    if length(segment) < 5
+        return seg_type, free_ends
+    end
     total_vol = sum_vol(segment, svInfo)
     largest_s, vol_max = max_vol(segment, svInfo)
     seg_type = check_semantic(segment, svInfo)
@@ -142,28 +145,42 @@ function classify_segments(segInfo, svInfo)
     processedSegments = ProcessedSegments()
 
     segs = segInfo.supervoxelDict
+    segids = collect(keys(segs))
+    num_seg = length(segids)
+    seg_types = Array{String}(num_seg)
+    freeendss = Array{Set{Int}}(num_seg)
+    @threads for i in 1:num_seg
+        seg_types[i], freeendss[i] = check_segment(segs[segids[i]], svInfo)
+    end
+    seg_type_dict = Dict{Int, String}()
+    freeends_dict = Dict{Int, Set{Int}}()
+    for i in 1:num_seg
+        a = segids[i]
+        seg_type_dict[a] = seg_types[i]
+        freeends_dict[a] = freeendss[i]
+    end
     for a in keys(segs)
         vol_a = sum_vol(segs[a], svInfo)
         sem_a = sum_sem(segs[a], svInfo)
         if length(segs[a]) >= 5
             seg_type, freeends = check_segment(segs[a], svInfo)
-            println("segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends)) $seg_type")
-            if seg_type == "glial" && length(segs[a]) > 30
+            println("segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends_dict[a])) ($(freeends_dict[a])) $(seg_type_dict[a])")
+            if seg_type_dict[a] == "glial" && length(segs[a]) > 30
                 push!(processedSegments.segid, a)
                 continue
             end
             if length(segs[a]) <= 30 && vol_a < vol_threshold
                 push!(smallSegments.segid, a)
             end
-            if !isempty(freeends) && (seg_type == "axon" || seg_type == "not sure")
-                println("axon: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends))")
+            if !isempty(freeends_dict[a]) && (seg_type_dict[a] == "axon" || seg_type_dict[a] == "not sure")
+                println("axon: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends_dict[a])) ($(freeends_dict[a]))")
                 push!(axons.segid, a)
-                axons.freeends[a] = freeends
-                for s in freeends
+                axons.freeends[a] = freeends_dict[a]
+                for s in freeends_dict[a]
                     axons.segment[s] = a
                 end
             end
-            if vol_a > vol_threshold && seg_type == "dendrite"
+            if vol_a > vol_threshold && seg_type_dict[a] == "dendrite"
                 seg = segs[a]
                 m, _ = max_vol(seg, svInfo)
                 push!(dendrites.segid, a)
@@ -179,18 +196,18 @@ function classify_segments(segInfo, svInfo)
                         dendrites.anchor[t] = b
                     end
                 end
-                println("dendrite: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends)) $(seg_type)")
+                println("dendrite: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends)) $(seg_type_dict[a])")
                 dendrites.freeends[a] = freeends
             elseif length(segs[a]) < 100 && vol_a < vol_threshold
                 b = find_psd(segs[a], svInfo)
                 if b == 0
                     continue
                 end
-                println("spine: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends)) $(seg_type)")
+                println("spine: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends_dict[a])) ($(freeends_dict[a])) $(seg_type_dict[a])")
                 push!(spines.segid, a)
                 spines.psd[a] = b
                 tails = find_ends(segs[a], b, svInfo;free=false)
-                spines.freeends[a] = setdiff(intersect(freeends, tails), svInfo.boundarySupervoxels)
+                spines.freeends[a] = setdiff(intersect(freeends_dict[a], tails), svInfo.boundarySupervoxels)
                 for t in spines.freeends[a]
                     spines.segment[t] = a
                     spines.anchor[t] = b

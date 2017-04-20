@@ -1,3 +1,4 @@
+using Base.Threads
 using DataStructures
 using Combinatorics
 include("segments.jl")
