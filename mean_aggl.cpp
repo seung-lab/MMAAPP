@@ -163,6 +163,7 @@ inline void agglomerate(std::vector<edge_t<T>> const& rg,
     //std::cout << "Total of " << next << " segments\n";
 
     of.open("new_rg.in", std::ofstream::out | std::ofstream::trunc);
+    of << n-1 << " " << n << " " << heap.size() << std::endl;
     while (heap.size())
     {
         auto e = heap.top();
