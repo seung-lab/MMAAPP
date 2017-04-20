@@ -188,12 +188,16 @@ function classify_segments(segInfo, svInfo)
                 branches = setdiff(seg, Set{Int}(m))
                 anchor = intersect(branches, keys(svInfo.regionGraph[m]))
                 freeends = SupervoxelSet()
-                for b in anchor
-                    tails = setdiff(find_ends(branches,b,svInfo), svInfo.boundarySupervoxels)
-                    union!(freeends, tails)
-                    for t in tails
+                anchor_array = collect(anchor)
+                tails_array = Array{Set{Int}}(length(anchor_array))
+                @threads for i in 1:length(anchor_array)
+                    tails_array[i] = setdiff(find_ends(branches,anchor_array[i],svInfo), svInfo.boundarySupervoxels)
+                end
+                for i in 1:length(anchor_array)
+                    union!(freeends, tails_array[i])
+                    for t in tails_array[i]
                         dendrites.segment[t] = a
-                        dendrites.anchor[t] = b
+                        dendrites.anchor[t] = anchor_array[i]
                     end
                 end
                 println("dendrite: segid: $(a), parts: $(length(segs[a])), size: $(vol_a), free_ends: $(length(freeends)) ($(freeends)) $(seg_type_dict[a])")
