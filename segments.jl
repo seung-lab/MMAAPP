@@ -71,6 +71,9 @@ function read_bboxes(fn)
         end
         bboxes[bbox_array[i][1]] = bbox_array[i][2:7]
     end
+    lines = []
+    bbox_array = []
+    gc()
     return bboxes
 end
 
@@ -93,6 +96,9 @@ function read_size(fn)
         end
         d_sizes[size_array[i][1]] = size_array[i][2]
     end
+    lines = []
+    size_array = []
+    gc()
     return d_sizes
 end
 
@@ -127,6 +133,10 @@ function read_semantic(fn)
         end
         d_sem[segid[i]]=sem_array[i]
     end
+    lines = []
+    segid = []
+    sem_array = []
+    gc()
     return d_sem
 end
 
@@ -154,6 +164,9 @@ function read_rg(fn)
         rg_volume[a_edge.p1][a_edge.p2] = a_edge
         rg_volume[a_edge.p2][a_edge.p1] = a_edge
     end
+    edges = []
+    lines = []
+    gc()
     return num_seg,rg_volume
 end
 
