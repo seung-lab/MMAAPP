@@ -34,11 +34,13 @@ type SegmentInfo
 end
 
 function read_size_line(ln)
-    return [parse(Int,x) for x in split(ln)]
+    ss = split(ln)
+    return parse(Int, ss[1]), parse(Int, ss[2])
 end
 
-function read_bbox_size_line(ln)
-    return [parse(Int,x) for x in split(ln)]
+function read_bbox_line(ln)
+    ss = split(ln)
+    return parse(Int, ss[1]), [parse(Int, x) for x in ss[2:7]]
 end
 
 function read_sem_line(ln)
@@ -58,20 +60,22 @@ function read_bboxes(fn)
     lines = readlines(bbox_file)
     close(bbox_file)
     num_line = length(lines)
+    segid = Array{Int}(num_line)
     bbox_array = Array{Array{Int,1}}(num_line)
     for i in 1:num_line
         if i % 100000 == 0
             println("reading $i lines")
         end
-        bbox_array[i] = read_bbox_size_line(lines[i])
+        segid[i],bbox_array[i] = read_bbox_line(lines[i])
     end
     for i in 1:num_line
         if i % 100000 == 0
             println("generating $i lines")
         end
-        bboxes[bbox_array[i][1]] = bbox_array[i][2:7]
+        bboxes[segid[i]] = bbox_array[i]
     end
     lines = []
+    segid = []
     bbox_array = []
     gc()
     return bboxes
@@ -83,20 +87,22 @@ function read_size(fn)
     lines = readlines(size_file)
     close(size_file)
     num_line = length(lines)
-    size_array = Array{Array{Int,1}}(num_line)
+    segid = Array{Int}(num_line)
+    size_array = Array{Int}(num_line)
     for i in 1:num_line
         if i % 100000 == 0
             println("reading $i lines")
         end
-        size_array[i] = read_bbox_size_line(lines[i])
+        segid[i], size_array[i] = read_size_line(lines[i])
     end
     for i in 1:num_line
         if i % 100000 == 0
             println("generating $i lines")
         end
-        d_sizes[size_array[i][1]] = size_array[i][2]
+        d_sizes[segid[i]] = size_array[i]
     end
     lines = []
+    segid = []
     size_array = []
     gc()
     return d_sizes

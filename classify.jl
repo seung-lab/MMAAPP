@@ -248,6 +248,10 @@ function classify_segments(segInfo, svInfo)
             spines.anchor[a] = a
         end
     end
+    seg_types = []
+    freeendss = []
+    gc()
+
     return axons, dendrites, spines, smallSegments, processedSegments
 end
 
