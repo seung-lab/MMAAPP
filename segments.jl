@@ -9,10 +9,10 @@ type atomic_edge
     area::Float64
 end
 
-typealias RegionGraph DefaultOrderedDict{Int, Dict{Int, atomic_edge}}
+typealias RegionGraph DefaultDict{Int, Dict{Int, atomic_edge}}
 typealias BoundingBoxes Dict{Int, Array{Int, 1}}
-typealias SupervoxelSizes DefaultOrderedDict{Int,Int}
-typealias SemanticInfo DefaultOrderedDict{Int,Array{Float32,1}}
+typealias SupervoxelSizes DefaultDict{Int,Int}
+typealias SemanticInfo DefaultDict{Int,Array{Float32,1}}
 typealias SegmentDict Dict{Int,Int}
 typealias SupervoxelDict Dict{Int, Set{Int}}
 typealias SupervoxelSet Set{Int}
