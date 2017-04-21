@@ -14,7 +14,7 @@ th_tier1 = agg_threshold - 0.000005
 th_tier2 = agg_threshold - 0.000015
 th_tier3 = agg_threshold - 0.000025
 reliable_th = parse(Float64, ARGS[2])
-svInfo, segInfo = load_segments([1,1,1,2048,2048,256])
+svInfo, segInfo = load_segments([28673, 24065, 2, 80634, 60859, 996])
 
 @time axons, dendrites, spines, smallSegments, processedSegments = classify_segments(segInfo, svInfo)
 
