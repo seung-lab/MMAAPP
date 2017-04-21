@@ -33,15 +33,44 @@ type SegmentInfo
     supervoxelDict::SupervoxelDict
 end
 
+function read_size_line(ln)
+    return [parse(Int,x) for x in split(ln)]
+end
+
+function read_bbox_size_line(ln)
+    return [parse(Int,x) for x in split(ln)]
+end
+
+function read_sem_line(ln)
+    ss = split(ln)
+    return parse(Int, ss[1]), [parse(Float64, x) for x in ss[2:5]]
+end
+
+function read_rg_line(ln)
+    types = (Int, Int, Float64, Float64, Int, Int, Float64, Float64)
+    ss = split(ln)
+    return atomic_edge(ntuple(i->parse(types[i],ss[i]),8)...)
+end
+
 function read_bboxes(fn)
     bbox_file = open(fn)
     bboxes = BoundingBoxes()
     lines = readlines(bbox_file)
-    for ln in lines
-        data = [parse(Int,x) for x in split(ln, " ")]
-        bboxes[data[1]] = data[2:end]
-    end
     close(bbox_file)
+    num_line = length(lines)
+    bbox_array = Array{Array{Int,1}}(num_line)
+    for i in 1:num_line
+        if i % 100000 == 0
+            println("reading $i lines")
+        end
+        bbox_array[i] = read_bbox_size_line(lines[i])
+    end
+    for i in 1:num_line
+        if i % 100000 == 0
+            println("generating $i lines")
+        end
+        bboxes[bbox_array[i][1]] = bbox_array[i][2:7]
+    end
     return bboxes
 end
 
@@ -49,13 +78,21 @@ function read_size(fn)
     size_file = open(fn)
     d_sizes = SupervoxelSizes(0)
     lines = readlines(size_file)
-    for ln in lines
-        data = split(ln)
-        seg_id = parse(Int, data[1])
-        sz = parse(Int,data[2])
-        d_sizes[seg_id] = sz
-    end
     close(size_file)
+    num_line = length(lines)
+    size_array = Array{Array{Int,1}}(num_line)
+    for i in 1:num_line
+        if i % 100000 == 0
+            println("reading $i lines")
+        end
+        size_array[i] = read_bbox_size_line(lines[i])
+    end
+    for i in 1:num_line
+        if i % 100000 == 0
+            println("generating $i lines")
+        end
+        d_sizes[size_array[i][1]] = size_array[i][2]
+    end
     return d_sizes
 end
 
@@ -72,45 +109,51 @@ end
 
 function read_semantic(fn)
     sem_file = open(fn)
-    d_sem = SemanticInfo(()-> Float32[])
+    d_sem = SemanticInfo(()-> Float64[])
     lines = readlines(sem_file)
-    for ln in lines
-        data = split(ln)
-        seg_id = parse(Int, data[1])
-        axon = parse(Float32,data[2])
-        dend = parse(Float32,data[3])
-        glial = parse(Float32,data[4])
-        psd = parse(Float32,data[5])
-        d_sem[seg_id]=[axon,dend,glial,psd]
-    end
     close(sem_file)
+    num_line = length(lines)
+    segid = Array{Int}(num_line)
+    sem_array = Array{Array{Float64,1}}(num_line)
+    for i in 1:num_line
+        if i % 100000 == 0
+            println("reading $i lines")
+        end
+        segid[i], sem_array[i] = read_sem_line(lines[i])
+    end
+    for i in 1:num_line
+        if i % 100000 == 0
+            println("generating $i lines")
+        end
+        d_sem[segid[i]]=sem_array[i]
+    end
     return d_sem
-end
-
-function read_rg_line(ln)
-    types = (Int, Int, Float64, Float64, Int, Int, Float64, Float64)
-    ss = split(ln)
-    return atomic_edge(ntuple(i->parse(types[i],ss[i]),8)...)
 end
 
 function read_rg(fn)
     rg_file = open(fn)
     rg_volume = RegionGraph(()->Dict{Int, atomic_edge}())
     lines = readlines(rg_file)
+    close(rg_file)
     data = split(lines[1])
     num_seg = parse(Int, data[2])
     num_edge = parse(Int, data[3])
     println("Number of threads = $(nthreads())")
     edges = Array{atomic_edge}(num_edge)
     @threads for i in 1:num_edge
+        if i % 100000 == 0
+            println("reading $i lines")
+        end
         edges[i] = read_rg_line(lines[i+1])
     end
     for i in 1:num_edge
+        if i % 100000 == 0
+            println("generating $i lines")
+        end
         a_edge = edges[i]
         rg_volume[a_edge.p1][a_edge.p2] = a_edge
         rg_volume[a_edge.p2][a_edge.p1] = a_edge
     end
-    close(rg_file)
     return num_seg,rg_volume
 end
 
@@ -133,12 +176,12 @@ function agglomerate(fn)
     segs = SupervoxelDict()
     mst = open(fn)
     lines = readlines(mst)
+    close(mst)
     for l in lines
         entry = mst_entry(l)
-            # the first one is child, the second one is parent
-            pd[entry[2]] = entry[1]
+        # the first one is child, the second one is parent
+        pd[entry[2]] = entry[1]
     end
-    close(mst)
 
     # find the root id
     for (c,p) in pd
