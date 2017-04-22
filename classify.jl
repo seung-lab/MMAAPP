@@ -191,7 +191,7 @@ function classify_segments(segInfo, svInfo)
                 freeends = SupervoxelSet()
                 anchor_array = collect(anchor)
                 tails_array = Array{Set{UInt64}}(length(anchor_array))
-                for i in 1:length(anchor_array)
+                @threads for i in 1:length(anchor_array)
                     tails_array[i] = setdiff(find_ends(branches,anchor_array[i],svInfo), svInfo.boundarySupervoxels)
                 end
                 for i in 1:length(anchor_array)
