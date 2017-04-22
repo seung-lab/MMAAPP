@@ -1,6 +1,6 @@
 function check_edge(rg_volume, edge, seg1, seg2)
-    neighboor1 = Set{Int}()
-    neighboor2 = Set{Int}()
+    neighboor1 = Set{UInt64}()
+    neighboor2 = Set{UInt64}()
     if edge.v1 in seg1
         neighboor1 = keys(rg_volume[edge.v1])
         neighboor2 = keys(rg_volume[edge.v2])
@@ -34,8 +34,8 @@ end
 
 function match_axons(axons, smallSegments, segInfo, svInfo, considered, merge_graph)
     visited = Set{atomic_edge}()
-    pairs = Int[]
-    processed = Set{Int}()
+    pairs = UInt64[]
+    processed = Set{UInt64}()
     for a in axons.segid
         matches = intersect(keys(segInfo.regionGraph[a]),axons.segid)
         #println("test: $a")
@@ -72,7 +72,7 @@ end
 
 function match_branches(really_long_axons, long_axons, segs, new_rg, free_ends, considered, merge_graph)
     pairs = []
-    processed = Set{Int}()
+    processed = Set{UInt64}()
     for l in really_long_axons
         neighboors = keys(new_rg[l])
         #candidates = intersect(neighboors, really_long_axons)
@@ -108,7 +108,7 @@ end
 
 function match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_facesegs, considered, merge_graph)
     pairs = []
-    processed = Set{Int}()
+    processed = Set{UInt64}()
     for s in keys(d_sizes)
         if s in d_facesegs
             continue
@@ -164,8 +164,8 @@ function match_long_axons2(long_axons, new_rg, rg_volume, segs, d_sizes, d_faces
 end
 
 function match_long_axons(small_pieces, long_axons, segInfo, considered, is_strict, merge_graph)
-    processed = Set{Int}()
-    pairs = Set{Int}()
+    processed = Set{UInt64}()
+    pairs = Set{UInt64}()
     rg = segInfo.regionGraph
     for s in small_pieces
         neighboors = keys(rg[s])

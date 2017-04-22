@@ -1,25 +1,25 @@
 type atomic_edge
-    p1::Int
-    p2::Int
+    p1::UInt64
+    p2::UInt64
     sum::Float64
     num::Float64
-    v1::Int
-    v2::Int
+    v1::UInt64
+    v2::UInt64
     aff::Float64
     area::Float64
 end
 
-typealias RegionGraph DefaultDict{Int, Dict{Int, atomic_edge}}
-typealias BoundingBoxes Array{Array{Int, 1}}
-typealias SupervoxelSizes Array{Int}
-typealias SemanticInfo Array{Array{Float32,1}}
-typealias SegmentDict Dict{Int,Int}
-typealias SupervoxelDict Dict{Int, Set{Int}}
-typealias SupervoxelSet Set{Int}
+typealias RegionGraph DefaultDict{UInt64, Dict{UInt, atomic_edge}}
+typealias BoundingBoxes Array{Array{Int32, 1}}
+typealias SupervoxelSizes Array{UInt64}
+typealias SemanticInfo Array{Array{Float64,1}}
+typealias SegmentDict Dict{UInt64,UInt64}
+typealias SupervoxelDict Dict{UInt64, Set{UInt64}}
+typealias SupervoxelSet Set{UInt64}
 
 
 type SupervoxelInfo
-    totalSupervoxels::Int64
+    totalSupervoxels::UInt64
     regionGraph::RegionGraph
     boundingBoxes::BoundingBoxes
     supervoxelSizes::SupervoxelSizes
@@ -35,21 +35,21 @@ end
 
 function read_size_line(ln)
     ss = split(ln)
-    return parse(Int, ss[1]), parse(Int, ss[2])
+    return parse(UInt64, ss[1]), parse(UInt64, ss[2])
 end
 
 function read_bbox_line(ln)
     ss = split(ln)
-    return parse(Int, ss[1]), [parse(Int, x) for x in ss[2:7]]
+    return parse(UInt64, ss[1]), [parse(Int32, x) for x in ss[2:7]]
 end
 
 function read_sem_line(ln)
     ss = split(ln)
-    return parse(Int, ss[1]), [parse(Float64, x) for x in ss[2:5]]
+    return parse(UInt64, ss[1]), [parse(Float64, x) for x in ss[2:5]]
 end
 
 function read_rg_line(ln)
-    types = (Int, Int, Float64, Float64, Int, Int, Float64, Float64)
+    types = (UInt64, UInt64, Float64, Float64, UInt64, UInt64, Float64, Float64)
     ss = split(ln)
     return atomic_edge(ntuple(i->parse(types[i],ss[i]),8)...)
 end
@@ -121,12 +121,12 @@ end
 
 function read_rg(fn)
     rg_file = open(fn)
-    rg_volume = RegionGraph(()->Dict{Int, atomic_edge}())
+    rg_volume = RegionGraph(()->Dict{UInt64, atomic_edge}())
     lines = readlines(rg_file)
     close(rg_file)
     data = split(lines[1])
-    num_seg = parse(Int, data[2])
-    num_edge = parse(Int, data[3])
+    num_seg = parse(UInt64, data[2])
+    num_edge = parse(UInt64, data[3])
     println("Number of threads = $(nthreads())")
     edges = Array{atomic_edge}(num_edge)
     @threads for i in 1:num_edge
@@ -151,9 +151,9 @@ end
 
 function mst_entry(l)
     data = split(l)
-    parent = parse(Int, data[3])
-    child1 = parse(Int, data[1])
-    child2 = parse(Int, data[2])
+    parent = parse(UInt64, data[3])
+    child1 = parse(UInt64, data[1])
+    child2 = parse(UInt64, data[2])
     weight = parse(Float64, data[4])/parse(Float64, data[5])
     if parent == child1
         return (parent, child2, weight)
@@ -178,7 +178,7 @@ function agglomerate(fn)
     # find the root id
     for (c,p) in pd
         # list of child node, for path compression
-        clst = Set{Int}(c)
+        clst = Set{UInt64}(c)
         # find the root
         while haskey(pd, p)
             push!(clst, p)

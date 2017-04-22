@@ -38,13 +38,13 @@ end
 
 function merge_edges(merge_graph, threshold, new_rg)
     edges = OrderedDict{atomic_edge, Float64}()
-    visited = Set{Int}()
+    visited = Set{UInt64}()
     for p in keys(merge_graph)
-        axons_group = Int[]
+        axons_group = UInt64[]
         if p in visited
             continue
         end
-        queue = Queue(Int)
+        queue = Queue(UInt64)
         enqueue!(queue, p)
         push!(axons_group, p)
 

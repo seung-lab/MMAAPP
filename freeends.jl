@@ -5,7 +5,7 @@ function check_connectivity(s, segment, rg_volume)
         if root in visited
             continue
         end
-        queue = Queue(Int)
+        queue = Queue(UInt64)
         enqueue!(queue, root)
 
         while length(queue) > 0
@@ -27,12 +27,12 @@ function check_connectivity(s, segment, rg_volume)
 end
 
 function really_check_freeends(ends, segment, svInfo)
-    free_ends = Set{Int}()
+    free_ends = Set{UInt64}()
     boundary_segs = svInfo.boundarySupervoxels
     rg_volume = svInfo.regionGraph
     avg_vol = sum_vol(segment, svInfo)/length(segment)
     for s in ends
-        end_segment = Set{Int}()
+        end_segment = Set{UInt64}()
         near_boundary = false
         if s in boundary_segs
             continue
@@ -40,7 +40,7 @@ function really_check_freeends(ends, segment, svInfo)
         #if d_sizes[s] > 5*avg_vol
         #    continue
         #end
-        neighboor2 = Set{Int}()
+        neighboor2 = Set{UInt64}()
         for neighboor in keys(rg_volume[s])
             if neighboor in segment
                 union!(neighboor2,intersect(keys(rg_volume[neighboor]),segment))
@@ -64,19 +64,19 @@ function really_check_freeends(ends, segment, svInfo)
 end
 
 function connected(subset, rg, facesizes)
-    visited = Set{Int}()
+    visited = Set{UInt64}()
     if length(subset) == 0
         println("no exit face")
-        return Int[]
+        return UInt64[]
     end
 
-    ccsz = Int[]
+    ccsz = UInt64[]
     for root in subset
         if root in visited
             continue
         end
         seg_sz = 0
-        queue = Queue(Int)
+        queue = Queue(UInt64)
         enqueue!(queue, root)
 
         while length(queue) > 0
@@ -100,11 +100,11 @@ function connected(subset, rg, facesizes)
 end
 
 function find_ends(segs, head, svInfo; free=true)
-    visited = Set{Int}()
-    queue = Queue(Int)
+    visited = Set{UInt64}()
+    queue = Queue(UInt64)
     enqueue!(queue, head)
-    tails = Set{Int}()
-    children = Set{Int}()
+    tails = Set{UInt64}()
+    children = Set{UInt64}()
     rg_volume = svInfo.regionGraph
     d_sem = svInfo.semanticInfo
     depth = 0
@@ -133,7 +133,7 @@ function find_ends(segs, head, svInfo; free=true)
             if !free
                 tails = children
             end
-            children = Set{Int}()
+            children = Set{UInt64}()
             depth += 1
         end
     end
@@ -147,10 +147,10 @@ function find_ends_of_dend(seg, svInfo)
     vol_seg = sum_vol(seg, svInfo)
     a, vol_max = max_vol(seg, svInfo)
     if vol_max < 0.5*vol_seg
-        return Set{Int}()
+        return Set{UInt64}()
     end
-    branches = setdiff(seg, Set{Int}(a))
-    tails = Set{Int}()
+    branches = setdiff(seg, Set{UInt64}(a))
+    tails = Set{UInt64}()
     for b in intersect(branches, keys(svInfo.regionGraph[a]))
         union!(tails, find_ends(branches,b,svInfo))
     end

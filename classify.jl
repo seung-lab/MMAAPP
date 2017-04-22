@@ -100,7 +100,7 @@ end
 
 
 function check_segment(segment, svInfo)
-    free_ends = Set{Int}()
+    free_ends = Set{UInt64}()
     seg_type = ""
     if length(segment) < 5
         return seg_type, free_ends
@@ -108,7 +108,7 @@ function check_segment(segment, svInfo)
     total_vol = sum_vol(segment, svInfo)
     largest_s, vol_max = max_vol(segment, svInfo)
     seg_type = check_semantic(segment, svInfo)
-    cc = check_connectivity(Set{Int}(largest_s), segment, svInfo.regionGraph)
+    cc = check_connectivity(Set{UInt64}(largest_s), segment, svInfo.regionGraph)
     if total_vol > vol_threshold && (cc > 2 && vol_max > 0.5*total_vol)
         if seg_type == "not sure"
             seg_type = "dendrite"
@@ -148,12 +148,12 @@ function classify_segments(segInfo, svInfo)
     segids = collect(keys(segs))
     num_seg = length(segids)
     seg_types = Array{String}(num_seg)
-    freeendss = Array{Set{Int}}(num_seg)
+    freeendss = Array{Set{UInt64}}(num_seg)
     @threads for i in 1:num_seg
         seg_types[i], freeendss[i] = check_segment(segs[segids[i]], svInfo)
     end
-    seg_type_dict = Dict{Int, String}()
-    freeends_dict = Dict{Int, Set{Int}}()
+    seg_type_dict = Dict{UInt64, String}()
+    freeends_dict = Dict{UInt64, Set{UInt64}}()
     for i in 1:num_seg
         a = segids[i]
         seg_type_dict[a] = seg_types[i]
@@ -185,12 +185,12 @@ function classify_segments(segInfo, svInfo)
                 m, _ = max_vol(seg, svInfo)
                 push!(dendrites.segid, a)
                 dendrites.shaft[a] = m
-                branches = setdiff(seg, Set{Int}(m))
+                branches = setdiff(seg, Set{UInt64}(m))
                 anchor = intersect(branches, keys(svInfo.regionGraph[m]))
                 freeends = SupervoxelSet()
                 anchor_array = collect(anchor)
-                tails_array = Array{Set{Int}}(length(anchor_array))
-                @threads for i in 1:length(anchor_array)
+                tails_array = Array{Set{UInt64}}(length(anchor_array))
+                for i in 1:length(anchor_array)
                     tails_array[i] = setdiff(find_ends(branches,anchor_array[i],svInfo), svInfo.boundarySupervoxels)
                 end
                 for i in 1:length(anchor_array)

@@ -14,15 +14,15 @@ th_tier1 = agg_threshold - 0.000005
 th_tier2 = agg_threshold - 0.000015
 th_tier3 = agg_threshold - 0.000025
 reliable_th = parse(Float64, ARGS[2])
-svInfo, segInfo = load_segments([28673, 24065, 2, 80634, 60859, 996])
+svInfo, segInfo = load_segments([1,1,1,2048,2048,256])
 
 @time axons, dendrites, spines, smallSegments, processedSegments = classify_segments(segInfo, svInfo)
 
 
-merge_graph1 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
-merge_graph2 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
-merge_graph3 = DefaultOrderedDict{Int, Set{Int}}(()->Set{Int}())
-considered = Set{Int}()
+merge_graph1 = DefaultOrderedDict{UInt64, Set{UInt64}}(()->Set{UInt64}())
+merge_graph2 = DefaultOrderedDict{UInt64, Set{UInt64}}(()->Set{UInt64}())
+merge_graph3 = DefaultOrderedDict{UInt64, Set{UInt64}}(()->Set{UInt64}())
+considered = Set{UInt64}()
 #union!(considered, match_long_axons(small_pieces, axons, segInfo, considered, true, merge_graph1))
 @time union!(processedSegments.segid, match_axons(axons, smallSegments, segInfo, svInfo, processedSegments, merge_graph1))
 @time union!(processedSegments.segid, process_rg(axons, dendrites, smallSegments, segInfo, svInfo, processedSegments, merge_graph1))

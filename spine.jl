@@ -25,7 +25,7 @@ end
 
 function match_segments(tails, set, trunks, svInfo)
     max_mean = zero(Float64)
-    target = zero(Int32)
+    target = zero(UInt64)
     rg_volume = svInfo.regionGraph
     for a in tails
         for b in keys(rg_volume[a])
@@ -48,8 +48,8 @@ function match_segments(tails, set, trunks, svInfo)
 end
 
 function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considered, merge_graph)
-    processed = Set{Int}()
-    shafts = Set{Int}()
+    processed = Set{UInt64}()
+    shafts = Set{UInt64}()
     for s in dendrites.segid
         push!(shafts, dendrites.shaft[s])
     end
@@ -58,7 +58,7 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
         if a in considered.segid
             continue
         end
-        set_a = get(segInfo.supervoxelDict,a,Set{Int}(a))
+        set_a = get(segInfo.supervoxelDict,a,Set{UInt64}(a))
         current_seg = a
         ends = spines.freeends[a]
         b = spines.psd[a]
@@ -85,7 +85,7 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
                     push!(processed, current_seg)
                     push!(processed, target)
                     println("merge: $(current_seg), $(new_seg) ($(ends), $target)")
-                    new_seg_set = get(segInfo.supervoxelDict, new_seg, Set{Int}(new_seg))
+                    new_seg_set = get(segInfo.supervoxelDict, new_seg, Set{UInt64}(new_seg))
                     if length(new_seg_set) < 5 && sum_vol(new_seg_set, svInfo) < vol_threshold
                         println("keep searching: $new_seg, $target")
                         union!(set_a, new_seg_set)
@@ -116,11 +116,11 @@ end
 function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered, merge_graph)
     visited = Set{atomic_edge}()
     dend_candidates = dendrites.segid
-    attached = Set{Int}()
+    attached = Set{UInt64}()
     keep_going = true
     while keep_going
         keep_going = false
-        new_candidates = Set{Int}()
+        new_candidates = Set{UInt64}()
         for b in setdiff(smallSegments.segid, attached)
             set_b = get(segInfo.supervoxelDict, b, Set([b]))
             if b in considered.segid
@@ -131,10 +131,10 @@ function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered
             if length(set_b) > 10 && !is_dendrite(sem_b, vol_b)
                 continue
             end
-            max_a = zero(Int)
+            max_a = zero(UInt64)
             max_aff = zero(Float64)
             for a in intersect(keys(segInfo.regionGraph[b]), dend_candidates)
-                set_a = get(segInfo.supervoxelDict, a, Set{Int}(a))
+                set_a = get(segInfo.supervoxelDict, a, Set{UInt64}(a))
                 tmp = process_edge(set_a, set_b, svInfo)
                 if tmp > reliable_th && tmp > max_aff
                     max_aff = tmp
@@ -147,7 +147,7 @@ function process_rg(axons, dendrites, smallSegments, segInfo, svInfo, considered
                 push!(merge_graph[max_a],b)
                 push!(merge_graph[b],max_a)
                 println("merge: $(b), $(max_a)")
-                set_a = get(segInfo.supervoxelDict, max_a, Set{Int}(max_a))
+                set_a = get(segInfo.supervoxelDict, max_a, Set{UInt64}(max_a))
                 push!(set_a, b)
                 segInfo.supervoxelDict[max_a] = set_a
                 keep_going = true
