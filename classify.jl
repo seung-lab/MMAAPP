@@ -154,6 +154,8 @@ function classify_segments(segInfo, svInfo)
     end
     seg_type_dict = Dict{UInt64, String}()
     freeends_dict = Dict{UInt64, Set{UInt64}}()
+    sizehint!(seg_type_dict, num_seg)
+    sizehint!(freeends_dict, num_seg)
     for i in 1:num_seg
         seg_type_dict[segids[i]] = seg_types[i]
         freeends_dict[segids[i]] = freeendss[i]

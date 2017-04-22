@@ -127,6 +127,7 @@ function read_rg(fn)
     data = split(lines[1])
     num_seg = parse(UInt64, data[2])
     num_edge = parse(UInt64, data[3])
+    sizehint!(rg_volume, num_seg)
     println("Number of threads = $(nthreads())")
     edges = Array{atomic_edge}(num_edge)
     @threads for i in 1:num_edge
@@ -163,8 +164,9 @@ function mst_entry(l)
 end
 
 
-function agglomerate(fn)
+function agglomerate(fn, max_seg)
     pd = SegmentDict()
+    sizehint!(pd, max_seg)
     segs = SupervoxelDict()
     mst = open(fn)
     lines = readlines(mst)
@@ -203,7 +205,7 @@ end
 function load_segments(chunk_bbox)
 @time    max_seg, rg_volume = read_rg("rg_volume.in")
 @time    _, new_rg = read_rg("new_rg.in")
-@time    segs, pd = agglomerate("test_mst.in")
+@time    segs, pd = agglomerate("test_mst.in", max_seg)
 @time    d_sizes = read_size("sv_volume.in",max_seg)
 @time    d_sem = read_semantic("sem_volume.in",max_seg)
     #rg_faces, face_segs, d_facesegs = process_faces(sgm.segmentation)
