@@ -155,9 +155,8 @@ function classify_segments(segInfo, svInfo)
     seg_type_dict = Dict{UInt64, String}()
     freeends_dict = Dict{UInt64, Set{UInt64}}()
     for i in 1:num_seg
-        a = segids[i]
-        seg_type_dict[a] = seg_types[i]
-        freeends_dict[a] = freeendss[i]
+        seg_type_dict[segids[i]] = seg_types[i]
+        freeends_dict[segids[i]] = freeendss[i]
     end
     for a in keys(segs)
         vol_a = sum_vol(segs[a], svInfo)
