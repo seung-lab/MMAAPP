@@ -29,7 +29,10 @@ function match_segments(tails, set, trunks, svInfo)
     rg_volume = svInfo.regionGraph
     for a in tails
         for b in keys(rg_volume[a])
-            if b in set || !(b in trunks)
+            if b in set
+                continue
+            end
+            if !isempty(trunks) && !(b in trunks)
                 continue
             end
             edge = rg_volume[a][b]
@@ -73,7 +76,7 @@ function check_segs(dendrites, spines, smallSegments, segInfo, svInfo, considere
                     target = match_segments(ends, set_a, keys(dendrites.segment), svInfo)
                 end
                 if target == 0 && length(set_a) >= 5
-                    target = match_segments(ends, set_a, keys(svInfo.regionGraph), svInfo)
+                    target = match_segments(ends, set_a, Set{UInt64}(), svInfo)
                 end
                 if target != 0
                     new_seg = get(svInfo.segmentDict, target, target)
