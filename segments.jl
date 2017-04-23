@@ -14,6 +14,7 @@ typealias BoundingBoxes Array{Array{Int32, 1}}
 typealias SupervoxelSizes Array{UInt64}
 typealias SemanticInfo Array{Array{Float64,1}}
 typealias SegmentDict Dict{UInt64,UInt64}
+typealias SegmentArray Array{UInt64,1}
 typealias SupervoxelDict Dict{UInt64, Set{UInt64}}
 typealias SupervoxelSet Set{UInt64}
 
@@ -24,7 +25,7 @@ type SupervoxelInfo
     boundingBoxes::BoundingBoxes
     supervoxelSizes::SupervoxelSizes
     semanticInfo::SemanticInfo
-    segmentDict::SegmentDict
+    segmentDict::SegmentArray
     boundarySupervoxels::SupervoxelSet
 end
 
@@ -155,34 +156,41 @@ function mst_entry(l)
     parent = parse(UInt64, data[3])
     child1 = parse(UInt64, data[1])
     child2 = parse(UInt64, data[2])
-    weight = parse(Float64, data[4])/parse(Float64, data[5])
     if parent == child1
-        return (parent, child2, weight)
+        return parent, child2
     else
-        return (parent, child1, weight)
+        return parent, child1
     end
 end
 
 
 function agglomerate(fn, max_seg)
-    pd = SegmentDict()
-    sizehint!(pd, max_seg)
+    pd = SegmentArray(max_seg)
     segs = SupervoxelDict()
     mst = open(fn)
     lines = readlines(mst)
+    num_line = length(lines)
+    sizehint!(segs, max_seg-num_line)
     close(mst)
-    for l in lines
-        entry = mst_entry(l)
+    @threads for i in 1:max_seg
+        pd[i] = i
+    end
+    @threads for i in 1:num_line
+        entry = mst_entry(lines[i])
         # the first one is child, the second one is parent
         pd[entry[2]] = entry[1]
     end
 
     # find the root id
-    for (c,p) in pd
+    for c in 1:max_seg
+        p = pd[c]
+        if p == c
+            continue
+        end
         # list of child node, for path compression
         clst = Set{UInt64}(c)
         # find the root
-        while haskey(pd, p)
+        while pd[p] != p
             push!(clst, p)
             p = pd[p]
         end
