@@ -57,12 +57,12 @@ end
 
 function read_bbox_line(ln)
     ss = split(ln)
-    return parse(UInt64, ss[1]), [parse(Int32, x) for x in ss[2:7]]
+    return parse(UInt64, ss[1]), [parse(Int32, ss[i]) for i in 2:7]
 end
 
 function read_sem_line(ln)
     ss = split(ln)
-    return parse(UInt64, ss[1]), [parse(Float64, x) for x in ss[2:5]]
+    return parse(UInt64, ss[1]), [parse(Float64, ss[i]) for i in 2:5]
 end
 
 function read_rg_line(ln)
