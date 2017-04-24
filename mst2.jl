@@ -56,35 +56,45 @@ function graph_to_tree(region_graph)
     println(count)
 
     return tree
-
 end
 
-rootNodes = Dict{UInt32, Float32}()
+function read_mst(fn)
+    atomic_region_graph = DefaultDict{Int , Dict{Int , Real}}(()->Dict{Int , Real}())
+    rootNodes = Dict{UInt32, Float32}()
+    count = 0
+    open(fn) do f
+        for ln in eachline(f)
+            if count % 100000 == 0
+                println("reading $count lines")
+            end
+            count += 1
+            parent, child, weight, head, tail = processln(ln)
+            #println("$parent, $child, $weight")
+            min_weight = weight
+            if haskey(rootNodes, child)
+                min_weight = min(min_weight, rootNodes[child])
+                delete!(rootNodes,child)
+            end
+            if haskey(rootNodes, parent)
+                min_weight = min(min_weight, rootNodes[parent])
+            end
+            rootNodes[parent] = min_weight
+            atomic_region_graph[head][tail] = min_weight
+            atomic_region_graph[tail][head] = min_weight
+        end
+    end
+    return atomic_region_graph
+end
+
 
 mst = MST(Array{UInt32,1}[], Array{Float32,1}())
 
-
-atomic_region_graph = DefaultDict{Int , Dict{Int , Real}}(()->Dict{Int , Real}())
-
-open(ARGS[1]) do f
-    for ln in eachline(f)
-        parent, child, weight, head, tail = processln(ln)
-        #println("$parent, $child, $weight")
-        min_weight = weight
-        if haskey(rootNodes, child)
-            min_weight = min(min_weight, rootNodes[child])
-            delete!(rootNodes,child)
-        end
-        if haskey(rootNodes, parent)
-            min_weight = min(min_weight, rootNodes[parent])
-        end
-        rootNodes[parent] = min_weight
-        atomic_region_graph[head][tail] = min_weight
-        atomic_region_graph[tail][head] = min_weight
-    end
-end
+atomic_region_graph = read_mst(ARGS[1])
+println("Reading everything")
 
 mst = graph_to_tree(atomic_region_graph)
+
+println("Generate MST")
 
 N=length(mst.dendValues)
 println("length: $N")
