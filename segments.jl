@@ -28,11 +28,26 @@ type SupervoxelInfo
     semanticInfo::SemanticInfo
     segmentDict::SegmentArray
     boundarySupervoxels::SupervoxelSet
+    function SupervoxelInfo()
+        totalSupervoxels = 0
+        regionGraph = RegionGraphArray()
+        boundingBoxes = BoundingBoxes()
+        supervoxelSizes = SupervoxelSizes()
+        semanticInfo = SemanticInfo()
+        segmentDict = SegmentArray()
+        boundarySupervoxels = SupervoxelSet()
+        return new(totalSupervoxels, regionGraph, boundingBoxes, supervoxelSizes, semanticInfo, segmentDict, boundarySupervoxels)
+    end
 end
 
 type SegmentInfo
     regionGraph::RegionGraph
     supervoxelDict::SupervoxelDict
+    function SegmentInfo()
+        regionGraph = RegionGraph(()->Dict{UInt64, atomic_edge}())
+        supervoxelDict = SupervoxelDict()
+        return new(regionGraph, supervoxelDict)
+    end
 end
 
 function read_size_line(ln)
@@ -56,9 +71,9 @@ function read_rg_line(ln)
     return atomic_edge(ntuple(i->parse(types[i],ss[i]),8)...)
 end
 
-function read_bboxes(fn,max_seg)
+function read_bboxes!(fn,max_seg,svInfo)
     bbox_file = open(fn)
-    bboxes = BoundingBoxes(max_seg)
+    svInfo.boundingBoxes = BoundingBoxes(max_seg)
     lines = readlines(bbox_file)
     close(bbox_file)
     num_line = length(lines)
@@ -67,16 +82,15 @@ function read_bboxes(fn,max_seg)
             println("reading $i lines")
         end
         segid,bbox_array = read_bbox_line(lines[i])
-        bboxes[segid] = bbox_array
+        svInfo.boundingBoxes[segid] = bbox_array
     end
     lines = []
     gc()
-    return bboxes
 end
 
-function read_size(fn,max_seg)
+function read_size!(fn,max_seg,svInfo)
     size_file = open(fn)
-    d_sizes = SupervoxelSizes(max_seg)
+    svInfo.supervoxelSizes = SupervoxelSizes(max_seg)
     lines = readlines(size_file)
     close(size_file)
     num_line = length(lines)
@@ -86,31 +100,30 @@ function read_size(fn,max_seg)
             println("reading $i lines")
         end
         segid, size = read_size_line(lines[i])
-        d_sizes[segid] = size
+        svInfo.supervoxelSizes[segid] = size
         segids[i] = segid
     end
     lines = []
     gc()
-    return segids, d_sizes
+    return segids
 end
 
-function find_facesegs(segids, bboxes, chunk_bbox)
-    d_facesegs = SupervoxelSet()
+function find_facesegs!(segids, chunk_bbox, svInfo)
+    svInfo.boundarySupervoxels = SupervoxelSet()
     for k in segids
         if k == 0
             continue
         end
-        bbox = bboxes[k]
+        bbox = svInfo.boundingBoxes[k]
         if any(i->(bbox[i] == chunk_bbox[i]), 1:6)
-            push!(d_facesegs, k)
+            push!(svInfo.boundarySupervoxels, k)
         end
     end
-    return d_facesegs
 end
 
-function read_semantic(fn, max_seg)
+function read_semantic!(fn, max_seg, svInfo)
     sem_file = open(fn)
-    d_sem = SemanticInfo(max_seg)
+    svInfo.semanticInfo = SemanticInfo(max_seg)
     lines = readlines(sem_file)
     close(sem_file)
     num_line = length(lines)
@@ -119,23 +132,23 @@ function read_semantic(fn, max_seg)
             println("reading $i lines")
         end
         segid, sem_array = read_sem_line(lines[i])
-        d_sem[segid] = sem_array
+        svInfo.semanticInfo[segid] = sem_array
     end
     lines = []
     gc()
-    return d_sem
 end
 
-function read_rg_array(fn)
+function read_rg_array!(fn, svInfo)
     rg_file = open(fn)
     lines = readlines(rg_file)
     close(rg_file)
     data = split(lines[1])
     num_seg = parse(UInt64, data[2])
+    svInfo.totalSupervoxels = num_seg
     num_edge = parse(UInt64, data[3])
-    rg_volume = RegionGraphArray(num_seg)
+    svInfo.regionGraph = RegionGraphArray(num_seg)
     for i in 1:num_seg
-        rg_volume[i] = Dict{UInt64, atomic_edge}()
+        svInfo.regionGraph[i] = Dict{UInt64, atomic_edge}()
     end
     println("Number of threads = $(nthreads())")
     edges = Array{atomic_edge}(num_edge)
@@ -150,24 +163,22 @@ function read_rg_array(fn)
             println("generating $i lines")
         end
         a_edge = edges[i]
-        rg_volume[a_edge.p1][a_edge.p2] = a_edge
-        rg_volume[a_edge.p2][a_edge.p1] = a_edge
+        svInfo.regionGraph[a_edge.p1][a_edge.p2] = a_edge
+        svInfo.regionGraph[a_edge.p2][a_edge.p1] = a_edge
     end
     edges = []
     lines = []
     gc()
-    return num_seg,rg_volume
 end
 
-function read_rg(fn)
+function read_rg!(fn, segInfo)
     rg_file = open(fn)
-    rg_volume = RegionGraph(()->Dict{UInt64, atomic_edge}())
     lines = readlines(rg_file)
     close(rg_file)
     data = split(lines[1])
     num_seg = parse(UInt64, data[2])
     num_edge = parse(UInt64, data[3])
-    sizehint!(rg_volume, num_seg)
+    sizehint!(segInfo.regionGraph, num_seg)
     println("Number of threads = $(nthreads())")
     edges = Array{atomic_edge}(num_edge)
     @threads for i in 1:num_edge
@@ -181,13 +192,12 @@ function read_rg(fn)
             println("generating $i lines")
         end
         a_edge = edges[i]
-        rg_volume[a_edge.p1][a_edge.p2] = a_edge
-        rg_volume[a_edge.p2][a_edge.p1] = a_edge
+        segInfo.regionGraph[a_edge.p1][a_edge.p2] = a_edge
+        segInfo.regionGraph[a_edge.p2][a_edge.p1] = a_edge
     end
     edges = []
     lines = []
     gc()
-    return num_seg,rg_volume
 end
 
 function mst_entry(l)
@@ -203,67 +213,62 @@ function mst_entry(l)
 end
 
 
-function agglomerate(fn, max_seg)
-    pd = SegmentArray(max_seg)
-    segs = SupervoxelDict()
+function agglomerate!(fn, max_seg, svInfo, segInfo)
+    svInfo.segmentDict = SegmentArray(max_seg)
+    segInfo.supervoxelDict = SupervoxelDict()
     mst = open(fn)
     lines = readlines(mst)
     num_line = length(lines)
-    sizehint!(segs, max_seg-num_line)
+    sizehint!(segInfo.supervoxelDict, max_seg-num_line)
     close(mst)
     @threads for i in 1:max_seg
-        pd[i] = i
+        svInfo.segmentDict[i] = i
     end
     @threads for i in 1:num_line
         entry = mst_entry(lines[i])
         # the first one is child, the second one is parent
-        pd[entry[2]] = entry[1]
+        svInfo.segmentDict[entry[2]] = entry[1]
     end
 
     # find the root id
     for c in 1:max_seg
-        p = pd[c]
+        p = svInfo.segmentDict[c]
         if p == c
             continue
         end
         # list of child node, for path compression
         clst = Set{UInt64}(c)
         # find the root
-        while pd[p] != p
+        while svInfo.segmentDict[p] != p
             push!(clst, p)
-            p = pd[p]
+            p = svInfo.segmentDict[p]
         end
         for c in clst
-            pd[c] = p
+            svInfo.segmentDict[c] = p
         end
         # now p is the root id
         # path compression
-        if haskey(segs, p)
+        if haskey(segInfo.supervoxelDict, p)
             #println("root already exist")
-            union!(segs[p], clst)
+            union!(segInfo.supervoxelDict[p], clst)
         else
-            segs[p] = clst
-            push!(segs[p],p)
+            segInfo.supervoxelDict[p] = clst
+            push!(segInfo.supervoxelDict[p],p)
         end
     end
-    return segs, pd
 end
 
-function load_segments(chunk_bbox)
-@time    max_seg, rg_volume = read_rg_array("rg_volume.in")
-@time    _, new_rg = read_rg("new_rg.in")
-@time    segs, pd = agglomerate("test_mst.in", max_seg)
-@time    segids, d_sizes = read_size("sv_volume.in",max_seg)
-@time    d_sem = read_semantic("sem_volume.in",max_seg)
+function load_segments!(chunk_bbox, svInfo, segInfo)
+@time    read_rg_array!("rg_volume.in", svInfo)
+@time    read_rg!("new_rg.in", segInfo)
+    max_seg = svInfo.totalSupervoxels
+@time    agglomerate!("test_mst.in", max_seg, svInfo, segInfo)
+@time    segids = read_size!("sv_volume.in", max_seg, svInfo)
+@time    read_semantic!("sem_volume.in", max_seg, svInfo)
     #rg_faces, face_segs, d_facesegs = process_faces(sgm.segmentation)
-@time    bboxes = read_bboxes("bbox_volume.in",max_seg)
+@time    read_bboxes!("bbox_volume.in", max_seg, svInfo)
     #println("$(length(keys(d_sizes)))")
     #println("size of rg: $(length(keys(new_rg)))")
     #d_facesegs = DefaultOrderedDict{Int,Int}(0)
-    println(length(segids))
-@time    d_facesegs = find_facesegs(segids, bboxes,chunk_bbox)
-    println(length(d_facesegs))
-    svInfo = SupervoxelInfo(max_seg, rg_volume, bboxes, d_sizes, d_sem, pd, d_facesegs)
-    segInfo = SegmentInfo(new_rg, segs)
-    return svInfo, segInfo
+@time    find_facesegs!(segids, chunk_bbox, svInfo)
 end

@@ -137,13 +137,7 @@ function check_segment(segment, svInfo)
 end
 
 
-function classify_segments(segInfo, svInfo)
-    axons = Axons()
-    dendrites = Dendrites()
-    spines = Spines()
-    smallSegments = SmallSegments()
-    processedSegments = ProcessedSegments()
-
+function classify_segments!(segInfo, svInfo, axons, dendrites, spines, smallSegments, processedSegments)
     segs = segInfo.supervoxelDict
     segids = collect(keys(segs))
     num_seg = length(segids)
