@@ -1,4 +1,4 @@
-#include "Segmentation.h"
+#include "Info.h"
 #include <QString>
 #include <QFile>
 #include <QTextStream>

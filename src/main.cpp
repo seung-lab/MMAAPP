@@ -1,4 +1,4 @@
-#include "Segmentation.h"
+#include "Info.h"
 #include <iostream>
 
 int main(int argc, char* argv[])

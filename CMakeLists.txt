@@ -41,7 +41,7 @@ include_directories(
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(MMAAPP
-    src/Segmentation.cpp
+    src/Info.cpp
     src/main.cpp)
 
 target_link_libraries(MMAAPP
