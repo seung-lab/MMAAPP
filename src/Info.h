@@ -30,7 +30,8 @@ typedef QList<QHash<id_type, MeanPlusEdge * > > RegionGraphArray;
 typedef QList<QVector<coord_type > > BoundingBoxes;
 typedef QList<size_type > SupervoxelSizes;
 typedef QList<QVector<value_type > > SemanticInfo;
-typedef QList<id_type > SegmentDict;
+typedef QList<id_type > SegmentList;
+typedef QHash<id_type, id_type > SegmentDict;
 typedef QHash<id_type, QHash<id_type, MeanPlusEdge * > > RegionGraph;
 typedef QHash<id_type, QSet<id_type > > SupervoxelDict;
 typedef QSet<id_type > SupervoxelSet;
@@ -54,7 +55,7 @@ private:
     BoundingBoxes m_boundingBoxes;
     SupervoxelSizes m_supervoxelSizes;
     SemanticInfo m_semanticInfo;
-    SegmentDict m_segmentDict;
+    SegmentList m_segmentDict;
     SupervoxelSet m_boundarySupervoxels;
 };
 
