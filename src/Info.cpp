@@ -37,6 +37,7 @@ void SupervoxelInfo::loadSupervoxelInfo()
     readBoundingBoxes("bbox_volume.in");
     readSemanticInfo("sem_volume.in");
     readMST("test_mst.in");
+    findBoundaries(QVector<coord_type > ({1,1,1,2048,2048,256}));
 }
 
 void SupervoxelInfo::readBoundingBoxes(const QString & filename)
@@ -49,13 +50,13 @@ void SupervoxelInfo::readBoundingBoxes(const QString & filename)
     }
     m_boundingBoxes.reserve(m_maxSegId+1);
     for (unsigned int i = 0; i <= m_maxSegId; i++) {
-        m_boundingBoxes.append(QVector<coord_type>(6,0));
+        m_boundingBoxes.append(QVector<coord_type>());
     }
     while (!inputFile.atEnd()) {
         auto data = inputFile.readLine().trimmed().split(' ');
         auto segid = data[0].toLongLong();
         for (int i = 0; i < 6; i++){
-            m_boundingBoxes[segid][i] = data[i+1].toLongLong();
+            m_boundingBoxes[segid].append(data[i+1].toInt());
         }
     }
     inputFile.close();
@@ -100,6 +101,26 @@ void SupervoxelInfo::readSupervoxelSizes(const QString & filename)
         m_supervoxelSizes[data[0].toLongLong()] = data[1].toLongLong();
     }
     inputFile.close();
+}
+
+void SupervoxelInfo::findBoundaries(const QVector<coord_type > & boundingBox)
+{
+    for (unsigned int i = 1; i <= m_maxSegId; i++) {
+        const QVector<coord_type > & bbox = m_boundingBoxes[i];
+        if (bbox.size() != 6) {
+            continue;
+        }
+        for (int j = 0; j < 3; j++) {
+            if (bbox[j] <= boundingBox[j]) {
+                m_boundarySupervoxels.insert(i);
+                break;
+            }
+            if (bbox[j+3] >= boundingBox[j+3]) {
+                m_boundarySupervoxels.insert(i);
+                break;
+            }
+        }
+    }
 }
 
 void SupervoxelInfo::readMST(const QString & filename)

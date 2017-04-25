@@ -46,12 +46,14 @@ public:
     void agglomerate(SupervoxelDict & supervoxelDict);
     size_type supervoxelSize(id_type segid) const {return m_supervoxelSizes[segid];};
     const QVector<value_type > & semanticInfo(id_type segid) const {return m_semanticInfo[segid];};
+    bool atBoundary(id_type segid) {return m_boundarySupervoxels.contains(segid);};
 private:
     void readRegionGraph(const QString & filename);
     void readSupervoxelSizes(const QString & filename);
     void readBoundingBoxes(const QString & filename);
     void readSemanticInfo(const QString & filename);
     void readMST(const QString & filename);
+    void findBoundaries(const QVector<coord_type > & boundingBox);
     id_type m_maxSegId;
     RegionGraphArray m_regionGraph;
     BoundingBoxes m_boundingBoxes;
