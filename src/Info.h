@@ -44,6 +44,8 @@ public:
     id_type maxSegId() { return m_maxSegId; };
     void loadSupervoxelInfo();
     void agglomerate(SupervoxelDict & supervoxelDict);
+    size_type supervoxelSize(id_type segid) const {return m_supervoxelSizes[segid];};
+    const QVector<value_type > & semanticInfo(id_type segid) const {return m_semanticInfo[segid];};
 private:
     void readRegionGraph(const QString & filename);
     void readSupervoxelSizes(const QString & filename);
@@ -65,6 +67,8 @@ public:
     SegmentInfo();
     ~SegmentInfo();
     SupervoxelDict & supervoxelDict() {return m_supervoxelDict; };
+    SupervoxelSet segments() {return m_supervoxelDict.keys().toSet();}
+    SupervoxelSet & supervoxelList(id_type segid) {return m_supervoxelDict[segid];};
 private:
     void readRegionGraph(const QString & filename);
     RegionGraph m_regionGraph;

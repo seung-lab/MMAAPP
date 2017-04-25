@@ -80,20 +80,28 @@ private:
 class Segmentation
 {
 public:
-    Segmentation()
+    Segmentation(SupervoxelInfo * svInfo, SegmentInfo * segInfo)
         :m_axons()
         ,m_dendrites()
         ,m_spines()
         ,m_smallSegments()
         ,m_processedSegments()
     {
+        m_svInfo = svInfo;
+        m_segInfo = segInfo;
     }
     ~Segmentation() {}
+    void init();
+    int segLength(id_type segid);
+    size_type segSize(id_type segid);
+    QVector<value_type > segSem(id_type segid);
 private:
     Axons m_axons;
     Dendrites m_dendrites;
     Spines m_spines;
     Segments m_smallSegments;
     Segments m_processedSegments;
+    SupervoxelInfo * m_svInfo;
+    SegmentInfo * m_segInfo;
 };
 #endif
