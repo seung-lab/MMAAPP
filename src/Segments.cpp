@@ -1,0 +1,266 @@
+#include "Segments.h"
+#include "Info.h"
+#include <QQueue>
+#include <QtDebug>
+
+size_type Segmentation::segSize(id_type segid)
+{
+    return sumSize(m_segInfo->supervoxelList(segid));
+}
+
+size_type Segmentation::sumSize(const SupervoxelSet & svList)
+{
+    size_type sizeSum = 0;
+    foreach (auto s, svList) {
+        sizeSum += m_svInfo->supervoxelSize(s);
+    }
+    return sizeSum;
+}
+
+QVector<value_type > Segmentation::segSem(id_type segid)
+{
+    return sumSem(m_segInfo->supervoxelList(segid));
+}
+
+QVector<value_type > Segmentation::sumSem(const SupervoxelSet & svList)
+{
+    QVector<value_type > semSum({0,0,0,0});
+    foreach (auto s, svList) {
+        const QVector<value_type > & sSem = m_svInfo->semanticInfo(s);
+        for (int i = 0; i < 4; i++) {
+            semSum[i] += sSem[i];
+        }
+    }
+    return semSum;
+}
+
+int Segmentation::segLength(id_type segid)
+{
+    return m_segInfo->supervoxelList(segid).size();
+}
+
+id_type Segmentation::largestSupervoxel(id_type segid, size_type * max)
+{
+    id_type c = 0;
+    size_type c_size = 0;
+    SupervoxelSet & svList = m_segInfo->supervoxelList(segid);
+    foreach (auto s, svList) {
+        if (c_size < m_svInfo->supervoxelSize(s)) {
+            c = s;
+            c_size = m_svInfo->supervoxelSize(s);
+        }
+    }
+    if (max != NULL) {
+        (*max) = c_size;
+    }
+    return c;
+}
+
+id_type Segmentation::maximumPSD(id_type segid, value_type * max)
+{
+    id_type c = 0;
+    value_type c_value = 0;
+    SupervoxelSet & svList = m_segInfo->supervoxelList(segid);
+    foreach (auto s, svList) {
+        const QVector<value_type > & sSem = m_svInfo->semanticInfo(s);
+        if (c_value < sSem[3]) {
+            c = s;
+            c_value = sSem[3];
+        }
+    }
+    if (max != NULL) {
+        (*max) = c_value;
+    }
+    return c;
+}
+
+bool Segmentation::isGlial(QVector<value_type > sem, size_type vol)
+{
+    if (sem[2] > 0.5*vol) {
+        return true;
+    }
+    return false;
+}
+
+bool Segmentation::isDendrite(QVector<value_type > sem, size_type vol)
+{
+    if (sem[1] > 0.5*vol && sem[1] > sem[0]) {
+        return true;
+    }
+    return false;
+}
+
+bool Segmentation::isAxon(QVector<value_type > sem, size_type vol)
+{
+    if (sem[0] > 0.5*vol && sem[0] > sem[1]) {
+        return true;
+    }
+    return false;
+}
+
+Segmentation::SegmentType Segmentation::checkSemantic(QVector<value_type > sem, size_type vol)
+{
+    SegmentType seg_type = Segmentation::Unknown;
+    if (isGlial(sem, vol)) {
+        seg_type = Segmentation::Glial;
+    } else if (isDendrite(sem, vol)) {
+        seg_type = Segmentation::Dendrite;
+    } else if (isAxon(sem, vol)) {
+        seg_type = Segmentation::Axon;
+    }
+    return seg_type;
+}
+
+int Segmentation::checkConnectivity(const SupervoxelSet & svList, const SupervoxelSet & exclude)
+{
+    int cc = 0;
+    auto visited = exclude;
+    const RegionGraphArray & rg_volume = m_svInfo->regionGraph();
+    foreach(auto root, svList) {
+        if (visited.contains(root)) {
+            continue;
+        }
+        QQueue<id_type > queue;
+        queue.enqueue(root);
+        while (!queue.isEmpty()) {
+            root = queue.dequeue();
+            if (visited.contains(root)) {
+                continue;
+            }
+            visited.insert(root);
+            foreach(auto neighbour,  rg_volume[root].keys()) {
+                if (visited.contains(neighbour) || !svList.contains(neighbour)) {
+                    continue;
+                }
+                queue.enqueue(neighbour);
+            }
+        }
+        cc += 1;
+    }
+    return cc;
+}
+
+SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed, const SupervoxelSet & exclude, bool free) {
+    auto visited = exclude;
+    QQueue<id_type > queue;
+    queue.enqueue(seed);
+    SupervoxelSet ends;
+    SupervoxelSet children;
+    const RegionGraphArray & rg_volume = m_svInfo->regionGraph();
+    int depth = 0;
+    while (!queue.isEmpty()) {
+        auto root = queue.dequeue();
+        if (!visited.contains(root)) {
+            visited.insert(root);
+            bool atEnd = true;
+            foreach(auto neighbour,  rg_volume[root].keys()) {
+                if (visited.contains(neighbour) || queue.contains(neighbour) || !svList.contains(neighbour)) {
+                    continue;
+                }
+                children.insert(neighbour);
+                atEnd = false;
+            }
+            if (root != seed && m_svInfo->semanticInfo(root)[3] > 500) {
+                atEnd = false;
+            }
+            if (atEnd) {
+                ends.insert(root);
+            }
+        }
+        if (queue.isEmpty() && !children.isEmpty()) {
+            foreach (auto c, children) {
+                queue.enqueue(c);
+            }
+            if (!free) {
+                ends = children;
+            }
+            children.clear();
+            depth += 1;
+        }
+    }
+    if (ends.size() == 0 && depth <= 1) {
+        ends.insert(seed);
+    }
+    return ends;
+}
+
+SupervoxelSet Segmentation::verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList)
+{
+    SupervoxelSet free_ends;
+    const RegionGraphArray & rg_volume = m_svInfo->regionGraph();
+    foreach(auto s, ends) {
+        SupervoxelSet end_segments;
+        bool near_boundary = false;
+        if (m_svInfo->atBoundary(s)) {
+            continue;
+        }
+        SupervoxelSet neighbours_of_neighbours;
+        foreach(auto neighbour, rg_volume[s].keys()) {
+            if (svList.contains(neighbour)) {
+                if (m_svInfo->atBoundary(neighbour)) {
+                    near_boundary = true;
+                    break;
+                }
+                neighbours_of_neighbours |= (rg_volume[neighbour].keys().toSet() & svList);
+                end_segments.insert(neighbour);
+            }
+        }
+        if (near_boundary || neighbours_of_neighbours.size() > 7) {
+            continue;
+        }
+        end_segments.insert(s);
+        int cc = checkConnectivity(svList, end_segments);
+        if (cc == 1) {
+            free_ends.insert(s);
+        }
+    }
+    return free_ends;
+}
+
+Segmentation::SegmentType Segmentation::classifySegment(id_type segid, SupervoxelSet & freeEnds)
+{
+    auto total_size = segSize(segid);
+    auto total_sem = segSem(segid);
+    size_type max_size = 0;
+    auto largest_sv = largestSupervoxel(segid, &max_size);
+    auto seg_type = checkSemantic(total_sem, total_size);
+
+    int cc = checkConnectivity(m_segInfo->supervoxelList(segid), QSet<id_type >({largest_sv}));
+    if (total_size > m_sizeThreshold && (cc > 2 && max_size > (0.5 * total_size))) {
+        if (seg_type == Segmentation::Unknown) {
+            seg_type = Segmentation::Dendrite;
+        }
+        return seg_type;
+    }
+    auto ends = findEnds(m_segInfo->supervoxelList(segid), largest_sv, SupervoxelSet());
+    if (cc == 1) {
+        ends.insert(largest_sv);
+    }
+
+    freeEnds |= verifyFreeEnds(ends, m_segInfo->supervoxelList(segid));
+
+    return seg_type;
+}
+
+void Segmentation::init()
+{
+    auto segids = m_segInfo->segments();
+    qDebug() << segids.size() << "segments";
+    foreach (auto a, segids) {
+        auto size_a = segSize(a);
+        auto sem_a = segSem(a);
+        auto length_a = segLength(a);
+        if (segLength(a) >= 5) {
+            SupervoxelSet free_ends;
+            SegmentType seg_type = classifySegment(a, free_ends);
+            qDebug() << "segid:" << a << "parts:" << segLength(a) << "size:" << size_a << "free_ends:" << free_ends.size() << free_ends;
+        }
+        //id_type shaft_a = 0;
+        //id_type syn_a = 0;
+        //auto maxSize_a = maxSize(a, &shaft_a);
+        //auto maxSyn_a = maxSyn(a, &syn_a);
+        //qDebug() << "segid:" << a << "length:" << segLength(a) << "segsize:" << size_a << "sem:" << sem_a;
+        //qDebug() << "max supervoxel:" << shaft_a << maxSize_a << "synapse:" << syn_a << maxSyn_a;
+    }
+}
+

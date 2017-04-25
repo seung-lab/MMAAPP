@@ -80,8 +80,15 @@ private:
 class Segmentation
 {
 public:
+    enum SegmentType {
+        Unknown = 0,
+        Axon,
+        Dendrite,
+        Glial
+    };
     Segmentation(SupervoxelInfo * svInfo, SegmentInfo * segInfo)
-        :m_axons()
+        :m_sizeThreshold(1000000)
+        ,m_axons()
         ,m_dendrites()
         ,m_spines()
         ,m_smallSegments()
@@ -94,8 +101,21 @@ public:
     void init();
     int segLength(id_type segid);
     size_type segSize(id_type segid);
+    size_type sumSize(const SupervoxelSet & svList);
     QVector<value_type > segSem(id_type segid);
+    QVector<value_type > sumSem(const SupervoxelSet & svList);
+    id_type largestSupervoxel(id_type segid, size_type * maxSize);
+    id_type maximumPSD(id_type segid, value_type * max);
+    SegmentType classifySegment(id_type segid, SupervoxelSet & freeEnds);
+    SegmentType checkSemantic(QVector<value_type > sem, size_type vol);
+    bool isGlial(QVector<value_type > sem, size_type vol);
+    bool isAxon(QVector<value_type > sem, size_type vol);
+    bool isDendrite(QVector<value_type > sem, size_type vol);
+    int checkConnectivity(const SupervoxelSet & svList, const SupervoxelSet & exclude);
+    SupervoxelSet findEnds(const SupervoxelSet & svList, id_type seed, const SupervoxelSet & exclude, bool free = true);
+    SupervoxelSet verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList);
 private:
+    size_type m_sizeThreshold;
     Axons m_axons;
     Dendrites m_dendrites;
     Spines m_spines;
