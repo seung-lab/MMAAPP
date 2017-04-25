@@ -33,17 +33,83 @@ SupervoxelInfo::SupervoxelInfo()
 void SupervoxelInfo::loadSupervoxelInfo()
 {
     readRegionGraph("rg_volume.in");
+    readSupervoxelSizes("sv_volume.in");
+    readBoundingBoxes("bbox_volume.in");
+    readSemanticInfo("sem_volume.in");
+}
+
+void SupervoxelInfo::readBoundingBoxes(const QString & filename)
+{
+    qDebug() << "Reading the bounding boxes";
+    QFile inputFile(filename);
+    if (!inputFile.open(QIODevice::ReadOnly))
+    {
+        return;
+    }
+    m_boundingBoxes.reserve(m_maxSegId+1);
+    for (unsigned int i = 0; i <= m_maxSegId; i++) {
+        m_boundingBoxes.append(QVector<coord_type>(6,0));
+    }
+    while (!inputFile.atEnd()) {
+        auto data = inputFile.readLine().trimmed().split(' ');
+        auto segid = data[0].toLongLong();
+        for (int i = 0; i < 6; i++){
+            m_boundingBoxes[segid][i] = data[i+1].toLongLong();
+        }
+    }
+    inputFile.close();
+}
+
+void SupervoxelInfo::readSemanticInfo(const QString & filename)
+{
+    qDebug() << "Reading the semantic information";
+    QFile inputFile(filename);
+    if (!inputFile.open(QIODevice::ReadOnly))
+    {
+        return;
+    }
+    m_semanticInfo.reserve(m_maxSegId+1);
+    for (unsigned int i = 0; i <= m_maxSegId; i++) {
+        m_semanticInfo.append(QVector<value_type>(4,0));
+    }
+    while (!inputFile.atEnd()) {
+        auto data = inputFile.readLine().trimmed().split(' ');
+        auto segid = data[0].toLongLong();
+        for (int i = 0; i < 4; i++){
+            m_semanticInfo[segid][i] = data[i+1].toDouble();
+        }
+    }
+    inputFile.close();
+}
+
+void SupervoxelInfo::readSupervoxelSizes(const QString & filename)
+{
+    qDebug() << "Reading the supervoxel sizes";
+    QFile inputFile(filename);
+    if (!inputFile.open(QIODevice::ReadOnly))
+    {
+        return;
+    }
+    m_supervoxelSizes.reserve(m_maxSegId+1);
+    for (unsigned int i = 0; i <= m_maxSegId; i++) {
+        m_supervoxelSizes.append(0);
+    }
+    while (!inputFile.atEnd()) {
+        auto data = inputFile.readLine().trimmed().split(' ');
+        m_supervoxelSizes[data[0].toLongLong()] = data[1].toLongLong();
+    }
+    inputFile.close();
 }
 
 void SupervoxelInfo::readRegionGraph(const QString & filename)
 {
+    qDebug() << "Reading the region graph";
     QFile inputFile(filename);
     if (!inputFile.open(QIODevice::ReadOnly))
     {
         return;
     }
     QList<QByteArray> metaData = inputFile.readLine().trimmed().split(' ');
-    qDebug() << metaData;
     m_maxSegId = metaData[0].toLongLong();
     uint64_t num_edges = metaData[2].toLongLong();
 

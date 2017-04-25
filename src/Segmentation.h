@@ -26,8 +26,8 @@ public:
 
 typedef QList<QHash<id_type, MeanPlusEdge * > > RegionGraphArray;
 typedef QList<QVector<coord_type > > BoundingBoxes;
-typedef QVector<size_type > SupervoxelSizes;
-typedef QVector<QVector<value_type > > SemanticInfo;
+typedef QList<size_type > SupervoxelSizes;
+typedef QList<QVector<value_type > > SemanticInfo;
 typedef QVector<id_type > SegmentArray;
 typedef QHash<id_type, QHash<id_type, MeanPlusEdge * > > RegionGraph;
 typedef QHash<id_type, QSet<id_type > > SupervoxelDict;
@@ -42,6 +42,9 @@ public:
     void loadSupervoxelInfo();
 private:
     void readRegionGraph(const QString & filename);
+    void readSupervoxelSizes(const QString & filename);
+    void readBoundingBoxes(const QString & filename);
+    void readSemanticInfo(const QString & filename);
     id_type m_maxSegId;
     RegionGraphArray m_regionGraph;
     BoundingBoxes m_boundingBoxes;
