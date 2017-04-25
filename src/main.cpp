@@ -1,4 +1,5 @@
 #include "Info.h"
+#include "Segments.h"
 #include <iostream>
 
 int main(int argc, char* argv[])
@@ -8,5 +9,6 @@ int main(int argc, char* argv[])
     SegmentInfo * segInfo = new SegmentInfo();
     auto svDict = segInfo->supervoxelDict();
     svInfo->agglomerate(svDict);
+    Segmentation * segmentation = new Segmentation();
     std::cout << "Finish loading" << std::endl;
 }
