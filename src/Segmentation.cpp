@@ -36,6 +36,7 @@ void SupervoxelInfo::loadSupervoxelInfo()
     readSupervoxelSizes("sv_volume.in");
     readBoundingBoxes("bbox_volume.in");
     readSemanticInfo("sem_volume.in");
+    readMST("test_mst.in");
 }
 
 void SupervoxelInfo::readBoundingBoxes(const QString & filename)
@@ -101,6 +102,33 @@ void SupervoxelInfo::readSupervoxelSizes(const QString & filename)
     inputFile.close();
 }
 
+void SupervoxelInfo::readMST(const QString & filename)
+{
+    qDebug() << "Reading the MST";
+    QFile inputFile(filename);
+    if (!inputFile.open(QIODevice::ReadOnly))
+    {
+        return;
+    }
+    m_segmentDict.reserve(m_maxSegId+1);
+    for (unsigned int i = 0; i <= m_maxSegId; i++) {
+        m_segmentDict.append(i);
+    }
+    while (!inputFile.atEnd()) {
+        auto data = inputFile.readLine().trimmed().split(' ');
+        auto child1 = data[0].toLongLong();
+        auto child2 = data[1].toLongLong();
+        auto parent = data[2].toLongLong();
+        if (parent == child1)
+        {
+            m_segmentDict[child2] = parent;
+        } else {
+            m_segmentDict[child1] = parent;
+        }
+    }
+    inputFile.close();
+}
+
 void SupervoxelInfo::readRegionGraph(const QString & filename)
 {
     qDebug() << "Reading the region graph";
@@ -120,6 +148,66 @@ void SupervoxelInfo::readRegionGraph(const QString & filename)
     for (unsigned int i = 0; i < num_edges; i++) {
         QByteArray line = inputFile.readLine().trimmed();
         MeanPlusEdge * edge = new MeanPlusEdge(line);
+        //qDebug() << "p1: " << edge->p1 << "p2: " << edge->p2;
+        m_regionGraph[edge->p1][edge->p2] = edge;
+        m_regionGraph[edge->p2][edge->p1] = edge;
+    }
+    inputFile.close();
+}
+
+void SupervoxelInfo::agglomerate(SupervoxelDict & supervoxelDict)
+{
+    qDebug() << "agglomerating";
+    for (unsigned int c = 1; c <= m_maxSegId; c++) {
+        auto p = m_segmentDict[c];
+        if (p == c) {
+            continue;
+        }
+        QSet<id_type > clst;
+        clst.insert(c);
+        while (m_segmentDict[p] != p) {
+            clst.insert(p);
+            p = m_segmentDict[p];
+        }
+        foreach(auto x, clst) {
+            m_segmentDict[x] = p;
+        }
+        if (supervoxelDict.contains(p)) {
+            supervoxelDict[p] |= clst;
+        } else {
+            clst.insert(p);
+            supervoxelDict[p] = clst;
+        }
+    }
+}
+
+SegmentInfo::SegmentInfo()
+    :m_regionGraph()
+    ,m_supervoxelDict()
+{
+    readRegionGraph("new_rg.in");
+}
+
+void SegmentInfo::readRegionGraph(const QString & filename)
+{
+    qDebug() << "Reading the region graph after agglomeration";
+    QFile inputFile(filename);
+    if (!inputFile.open(QIODevice::ReadOnly))
+    {
+        return;
+    }
+    QList<QByteArray> metaData = inputFile.readLine().trimmed().split(' ');
+    uint64_t num_edges = metaData[2].toLongLong();
+
+    for (unsigned int i = 0; i < num_edges; i++) {
+        QByteArray line = inputFile.readLine().trimmed();
+        MeanPlusEdge * edge = new MeanPlusEdge(line);
+        if (!m_regionGraph.contains(edge->p1)) {
+            m_regionGraph[edge->p1] = QHash<id_type, MeanPlusEdge * >();
+        }
+        if (!m_regionGraph.contains(edge->p2)) {
+            m_regionGraph[edge->p2] = QHash<id_type, MeanPlusEdge * >();
+        }
         //qDebug() << "p1: " << edge->p1 << "p2: " << edge->p2;
         m_regionGraph[edge->p1][edge->p2] = edge;
         m_regionGraph[edge->p2][edge->p1] = edge;
