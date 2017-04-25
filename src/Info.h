@@ -1,3 +1,5 @@
+#ifndef MMAAPP_INFO_H
+#define MMAAPP_INFO_H
 #include <QByteArray>
 #include <QHash>
 #include <QSet>
@@ -67,3 +69,4 @@ private:
     RegionGraph m_regionGraph;
     SupervoxelDict m_supervoxelDict;
 };
+#endif
