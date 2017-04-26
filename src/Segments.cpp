@@ -161,7 +161,7 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
             if (root != seed && m_svInfo->semanticInfo(root)[3] > 500) {
                 atEnd = false;
             }
-            if (atEnd) {
+            if (atEnd && !m_svInfo->atBoundary(root)) {
                 ends.insert(root);
             }
         }
@@ -176,7 +176,7 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
             depth += 1;
         }
     }
-    if (ends.size() == 0 && depth <= 1) {
+    if (ends.size() == 0 && depth <= 1 && !m_svInfo->atBoundary(seed)) {
         ends.insert(seed);
     }
     return ends;
