@@ -109,6 +109,7 @@ public:
     QVector<value_type > sumSem(const SupervoxelSet & svList);
     id_type largestSupervoxel(id_type segid, size_type * maxSize);
     id_type maximumPSD(id_type segid, value_type * max);
+    id_type findPSD(id_type segid);
     SegmentType classifySegment(id_type segid, SupervoxelSet & freeEnds);
     SegmentType checkSemantic(QVector<value_type > sem, size_type vol);
     bool isGlial(QVector<value_type > sem, size_type vol);

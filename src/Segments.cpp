@@ -91,6 +91,20 @@ id_type Segmentation::maximumPSD(id_type segid, value_type * max)
     return c;
 }
 
+id_type Segmentation::findPSD(id_type segid)
+{
+    auto sem = segSem(segid);
+    if (sem[3] < 200) {
+        return 0;
+    }
+    value_type psd_max = 0;
+    id_type m = maximumPSD(segid, &psd_max);
+    if (psd_max > 0.5 * sem[3]) {
+        return m;
+    }
+    return 0;
+}
+
 bool Segmentation::isGlial(QVector<value_type > sem, size_type vol)
 {
     if (sem[2] > 0.5*vol) {
@@ -276,7 +290,7 @@ void Segmentation::processDendrite(id_type segid)
 
 void Segmentation::init()
 {
-    auto segids = m_segInfo->segments();
+    auto segids = m_segInfo->compositeSegments();
     qDebug() << segids.size() << "segments";
     foreach (auto a, segids) {
         auto size_a = segSize(a);

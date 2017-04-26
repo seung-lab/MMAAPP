@@ -71,7 +71,8 @@ public:
     SegmentInfo();
     ~SegmentInfo();
     SupervoxelDict & supervoxelDict() {return m_supervoxelDict; };
-    SupervoxelSet segments() {return m_supervoxelDict.keys().toSet();}
+    SupervoxelSet compositeSegments() {return m_supervoxelDict.keys().toSet();}
+    SupervoxelSet allSegments() {return m_regionGraph.keys().toSet();}
     SupervoxelSet & supervoxelList(id_type segid) {return m_supervoxelDict[segid];};
 private:
     void readRegionGraph(const QString & filename);
