@@ -26,6 +26,7 @@ public:
     }
     virtual ~Axons() {}
     id_type segid(id_type freeend) const { return m_segment[freeend]; }
+    const QList<id_type > allFreeEnds() {return m_segment.keys();}
     const SupervoxelSet & freeends(id_type segid) {return m_freeends[segid];}
     virtual void insertFreeEnds(id_type segid, const SupervoxelSet & freeEnds);
 private:
@@ -46,6 +47,7 @@ public:
     }
     virtual ~Dendrites() {}
     id_type segid(id_type freeend) { return m_segment[freeend]; }
+    const QList<id_type > allFreeEnds() {return m_segment.keys();}
     const SupervoxelSet & freeEnds(id_type segid) { return m_freeends[segid]; }
     const SupervoxelSet & shaft(id_type segid) { return m_shafts[segid]; }
     id_type anchor(id_type freeend) const { return m_anchors[freeend]; }
@@ -71,6 +73,7 @@ public:
     }
     virtual ~Spines() {}
     id_type segid(id_type freeend) const { return m_segment[freeend]; }
+    const QList<id_type > allFreeEnds() {return m_segment.keys();}
     QSet<id_type > & freeEnds(id_type segid) {return m_freeends[segid];}
     id_type psd(id_type segid) const { return m_psd[segid]; }
     id_type anchor(id_type freeend) const { return m_anchors[freeend]; }
