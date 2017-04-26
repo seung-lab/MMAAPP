@@ -369,12 +369,6 @@ void Segmentation::init()
                 }
 
         }
-        //id_type shaft_a = 0;
-        //id_type syn_a = 0;
-        //auto maxSize_a = maxSize(a, &shaft_a);
-        //auto maxSyn_a = maxSyn(a, &syn_a);
-        //qDebug() << "segid:" << a << "length:" << segLength(a) << "segsize:" << size_a << "sem:" << sem_a;
-        //qDebug() << "max supervoxel:" << shaft_a << maxSize_a << "synapse:" << syn_a << maxSyn_a;
     }
 }
 
