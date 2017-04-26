@@ -170,7 +170,8 @@ int Segmentation::checkConnectivity(const SupervoxelSet & svList, const Supervox
     return cc;
 }
 
-SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed, const SupervoxelSet & exclude, bool free) {
+SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed, const SupervoxelSet & exclude, bool free)
+{
     auto visited = exclude;
     QQueue<id_type > queue;
     queue.enqueue(seed);
