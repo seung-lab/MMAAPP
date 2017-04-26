@@ -97,6 +97,7 @@ public:
     };
     Segmentation(SupervoxelInfo * svInfo, SegmentInfo * segInfo)
         :m_sizeThreshold(1000000)
+        ,m_reliableMeanAffinity(0.17)
         ,m_axons()
         ,m_dendrites()
         ,m_spines()
@@ -128,6 +129,7 @@ public:
     bool processSpine(id_type segid, const SupervoxelSet & freeEnds);
 private:
     size_type m_sizeThreshold;
+    value_type m_reliableMeanAffinity;
     Axons m_axons;
     Dendrites m_dendrites;
     Spines m_spines;
