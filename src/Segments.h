@@ -10,6 +10,7 @@ public:
     }
     virtual ~Segments() {}
     SupervoxelSet & segids() {return m_segids;}
+    virtual void insertSegment(id_type segid) { m_segids.insert(segid); };
 private:
     SupervoxelSet m_segids;
 };
@@ -26,6 +27,7 @@ public:
     virtual ~Axons() {}
     id_type segid(id_type freeend) const { return m_segment[freeend]; }
     QSet<id_type > & freeends(id_type segid) {return m_freeends[segid];}
+    virtual void insertFreeEnds(id_type segid, const SupervoxelSet & freeEnds);
 private:
     SegmentDict m_segment;
     SupervoxelDict m_freeends;
@@ -44,13 +46,14 @@ public:
     }
     virtual ~Dendrites() {}
     id_type segid(id_type freeend) { return m_segment[freeend]; }
-    QSet<id_type > & freeends(id_type segid) {return m_freeends[segid];}
-    id_type shaft(id_type segid) const { return m_shafts[segid]; }
+    const SupervoxelSet & freeEnds(id_type segid) { return m_freeends[segid]; }
+    const SupervoxelSet & shaft(id_type segid) { return m_shafts[segid]; }
     id_type anchor(id_type freeend) const { return m_anchors[freeend]; }
+    virtual void insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSet & shaft);
 private:
     SegmentDict m_segment;
     SupervoxelDict m_freeends;
-    SegmentDict m_shafts;
+    SupervoxelDict m_shafts;
     SegmentDict m_anchors;
 };
 
@@ -114,6 +117,7 @@ public:
     int checkConnectivity(const SupervoxelSet & svList, const SupervoxelSet & exclude);
     SupervoxelSet findEnds(const SupervoxelSet & svList, id_type seed, const SupervoxelSet & exclude, bool free = true);
     SupervoxelSet verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList);
+    void processDendrite(id_type segid);
 private:
     size_type m_sizeThreshold;
     Axons m_axons;

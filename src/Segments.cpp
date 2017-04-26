@@ -3,6 +3,23 @@
 #include <QQueue>
 #include <QtDebug>
 
+void Axons::insertFreeEnds(id_type segid, const SupervoxelSet & freeEnds)
+{
+    m_freeends[segid] |= freeEnds;
+    foreach (auto s, freeEnds) {
+        m_segment[s] = segid;
+    }
+}
+
+void Dendrites::insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSet & freeEnds)
+{
+    m_freeends[segid] |= freeEnds;
+    foreach (auto s, freeEnds) {
+        m_segment[s] = segid;
+        m_anchors[s] = anchor;
+    }
+}
+
 size_type Segmentation::segSize(id_type segid)
 {
     return sumSize(m_segInfo->supervoxelList(segid));
@@ -239,6 +256,24 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
     return seg_type;
 }
 
+void Segmentation::processDendrite(id_type segid)
+{
+    SupervoxelSet shaft;
+    id_type m = largestSupervoxel(segid, NULL);
+    shaft.insert(m);
+    SupervoxelSet branches = m_segInfo->supervoxelList(segid) - shaft;
+    SupervoxelSet anchors = branches & SupervoxelSet::fromList(m_svInfo->neighbours(m));
+    if (segid == 82124) {
+        qDebug() << anchors;
+    }
+    foreach (auto a, anchors) {
+        auto free_ends = findEnds(m_segInfo->supervoxelList(segid), a, shaft);
+        m_dendrites.insertFreeEnds(segid, a, free_ends);
+    }
+    qDebug() << "Dendrite: segid:" << segid << "parts:" << segLength(segid) << "size:" << segSize(segid) << "free_ends:" << m_dendrites.freeEnds(segid).size();
+    qDebug() << m_dendrites.freeEnds(segid);
+}
+
 void Segmentation::init()
 {
     auto segids = m_segInfo->segments();
@@ -250,7 +285,28 @@ void Segmentation::init()
         if (segLength(a) >= 5) {
             SupervoxelSet free_ends;
             SegmentType seg_type = classifySegment(a, free_ends);
-            qDebug() << "segid:" << a << "parts:" << segLength(a) << "size:" << size_a << "free_ends:" << free_ends.size() << free_ends;
+            qDebug() << "segid:" << a << "parts:" << segLength(a) << "size:" << size_a << "free_ends:" << free_ends.size() << free_ends << seg_type;
+
+            if ((seg_type == Axon || seg_type == Unknown) && !free_ends.isEmpty()) {
+                m_axons.insertSegment(a);
+                m_axons.insertFreeEnds(a, free_ends);
+                qDebug() << "Axon: segid:" << a << "parts:" << segLength(a) << "size:" << size_a << "free_ends:" << free_ends.size() << free_ends ;
+            }
+
+            if (seg_type == Dendrite && size_a > m_sizeThreshold) {
+                processDendrite(a);
+            }
+
+            if (length_a <= 30 && size_a < m_sizeThreshold) {
+                m_smallSegments.insertSegment(a);
+                continue;
+            }
+
+            if (seg_type == Glial && length_a > 30) {
+                m_processedSegments.insertSegment(a);
+                continue;
+            }
+
         }
         //id_type shaft_a = 0;
         //id_type syn_a = 0;
