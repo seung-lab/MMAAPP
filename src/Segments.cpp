@@ -320,10 +320,10 @@ void Segmentation::init()
         auto size_a = segSize(a);
         auto sem_a = segSem(a);
         auto length_a = segLength(a);
-        if (segLength(a) >= 5) {
+        if (length_a >= 5) {
             SupervoxelSet free_ends;
             SegmentType seg_type = classifySegment(a, free_ends);
-            qDebug() << "segid:" << a << "parts:" << segLength(a) << "size:" << size_a << "free_ends:" << free_ends.size() << free_ends << seg_type;
+            qDebug() << "segid:" << a << "parts:" << length_a << "size:" << size_a << "free_ends:" << free_ends.size() << free_ends << seg_type;
 
             if (seg_type == Glial && length_a > 30) {
                 m_processedSegments.insertSegment(a);
