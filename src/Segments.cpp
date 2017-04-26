@@ -115,7 +115,6 @@ int Segmentation::checkConnectivity(const SupervoxelSet & svList, const Supervox
 {
     int cc = 0;
     auto visited = exclude;
-    const RegionGraphArray & rg_volume = m_svInfo->regionGraph();
     foreach(auto root, svList) {
         if (visited.contains(root)) {
             continue;
@@ -128,7 +127,7 @@ int Segmentation::checkConnectivity(const SupervoxelSet & svList, const Supervox
                 continue;
             }
             visited.insert(root);
-            foreach(auto neighbour,  rg_volume[root].keys()) {
+            foreach(auto neighbour,  m_svInfo->neighbours(root)) {
                 if (visited.contains(neighbour) || !svList.contains(neighbour)) {
                     continue;
                 }
@@ -146,14 +145,13 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
     queue.enqueue(seed);
     SupervoxelSet ends;
     SupervoxelSet children;
-    const RegionGraphArray & rg_volume = m_svInfo->regionGraph();
     int depth = 0;
     while (!queue.isEmpty()) {
         auto root = queue.dequeue();
         if (!visited.contains(root)) {
             visited.insert(root);
             bool atEnd = true;
-            foreach(auto neighbour,  rg_volume[root].keys()) {
+            foreach(auto neighbour,  m_svInfo->neighbours(root)) {
                 if (visited.contains(neighbour) || queue.contains(neighbour) || !svList.contains(neighbour)) {
                     continue;
                 }
@@ -187,7 +185,6 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
 SupervoxelSet Segmentation::verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList)
 {
     SupervoxelSet free_ends;
-    const RegionGraphArray & rg_volume = m_svInfo->regionGraph();
     foreach(auto s, ends) {
         SupervoxelSet end_segments;
         bool near_boundary = false;
@@ -195,13 +192,13 @@ SupervoxelSet Segmentation::verifyFreeEnds(const SupervoxelSet & ends, const Sup
             continue;
         }
         SupervoxelSet neighbours_of_neighbours;
-        foreach(auto neighbour, rg_volume[s].keys()) {
+        foreach(auto neighbour, m_svInfo->neighbours(s)) {
             if (svList.contains(neighbour)) {
                 if (m_svInfo->atBoundary(neighbour)) {
                     near_boundary = true;
                     break;
                 }
-                neighbours_of_neighbours |= (rg_volume[neighbour].keys().toSet() & svList);
+                neighbours_of_neighbours |= (SupervoxelSet::fromList(m_svInfo->neighbours(neighbour)) & svList);
                 end_segments.insert(neighbour);
             }
         }
