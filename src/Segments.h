@@ -26,7 +26,7 @@ public:
     }
     virtual ~Axons() {}
     id_type segid(id_type freeend) const { return m_segment[freeend]; }
-    QSet<id_type > & freeends(id_type segid) {return m_freeends[segid];}
+    const SupervoxelSet & freeends(id_type segid) {return m_freeends[segid];}
     virtual void insertFreeEnds(id_type segid, const SupervoxelSet & freeEnds);
 private:
     SegmentDict m_segment;
