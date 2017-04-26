@@ -338,10 +338,13 @@ void Segmentation::init()
                 m_axons.insertSegment(a);
                 m_axons.insertFreeEnds(a, free_ends);
                 qDebug() << "Axon: segid:" << a << "parts:" << segLength(a) << "size:" << size_a << "free_ends:" << free_ends.size() << free_ends ;
+                continue;
             }
 
             if (seg_type == Dendrite && size_a > m_sizeThreshold) {
-                processDendrite(a);
+                if (processDendrite(a)) {
+                    continue;
+                }
             }
 
             if (length_a < 100 && size_a < m_sizeThreshold) {
