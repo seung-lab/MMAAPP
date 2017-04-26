@@ -49,6 +49,7 @@ public:
     const RegionGraphArray & regionGraph() const {return m_regionGraph;};
     const QList<id_type > neighbours(id_type segid) const {return m_regionGraph[segid].keys();};
     bool atBoundary(id_type segid) {return m_boundarySupervoxels.contains(segid);};
+    const MeanPlusEdge * edge(id_type a, id_type b) const {return m_regionGraph[a][b];}
 private:
     void readRegionGraph(const QString & filename);
     void readSupervoxelSizes(const QString & filename);
@@ -75,6 +76,7 @@ public:
     SupervoxelSet allSegments() {return m_regionGraph.keys().toSet();}
     SupervoxelSet & supervoxelList(id_type segid) {return m_supervoxelDict[segid];};
     const QList<id_type > neighbours(id_type segid) const {return m_regionGraph[segid].keys();};
+    const MeanPlusEdge * edge(id_type a, id_type b) const {return m_regionGraph[a][b];}
 private:
     void readRegionGraph(const QString & filename);
     RegionGraph m_regionGraph;
