@@ -508,6 +508,9 @@ void Segmentation::attachSmallSegments(SupervoxelDict & mergeGraph)
         }
         dend_candidates = new_candidates;
     }
+    foreach (auto a, attached) {
+        m_processedSegments.insertSegment(a);
+    }
     //return attached;
 }
 
