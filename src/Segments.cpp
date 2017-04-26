@@ -279,6 +279,7 @@ bool Segmentation::processDendrite(id_type segid)
     SupervoxelSet shaft;
     id_type m = largestSupervoxel(segid, NULL);
     shaft.insert(m);
+    m_dendrites.insertSegment(segid, shaft);
     SupervoxelSet branches = m_segInfo->supervoxelList(segid) - shaft;
     SupervoxelSet anchors = branches & SupervoxelSet::fromList(m_svInfo->neighbours(m));
     foreach (auto a, anchors) {
