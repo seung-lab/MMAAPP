@@ -425,10 +425,15 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
             }
             if (checkSegEdge(seg_edge)) {
                 qDebug() << qMin(a,b) << qMax(a,b);
+                //FIXME, this is wrong
+                processed << seg_edge->v1 << seg_edge->v2;
                 mergeGraph[a].insert(b);
                 mergeGraph[b].insert(a);
             }
         }
+    }
+    foreach (auto a, processed) {
+        m_processedSegments.insertSegment(a);
     }
 }
 
