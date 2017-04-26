@@ -281,15 +281,11 @@ void Segmentation::processDendrite(id_type segid)
     shaft.insert(m);
     SupervoxelSet branches = m_segInfo->supervoxelList(segid) - shaft;
     SupervoxelSet anchors = branches & SupervoxelSet::fromList(m_svInfo->neighbours(m));
-    if (segid == 82124) {
-        qDebug() << anchors;
-    }
     foreach (auto a, anchors) {
         auto free_ends = findEnds(m_segInfo->supervoxelList(segid), a, shaft);
         m_dendrites.insertFreeEnds(segid, a, free_ends);
     }
     qDebug() << "Dendrite: segid:" << segid << "parts:" << segLength(segid) << "size:" << segSize(segid) << "free_ends:" << m_dendrites.freeEnds(segid).size();
-    qDebug() << m_dendrites.freeEnds(segid);
 }
 
 void Segmentation::init()
