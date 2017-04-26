@@ -437,8 +437,83 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
     }
 }
 
+value_type Segmentation::checkSupervoxelEdges(const SupervoxelSet & set_a, const SupervoxelSet & set_b)
+{
+    value_type max_aff = 0;
+    foreach(auto a, set_a) {
+        foreach(auto b, (set_b & SupervoxelSet::fromList(m_svInfo->neighbours(a)))) {
+            const MeanPlusEdge * edge = m_svInfo->edge(a,b);
+            if (edge->num > 1000) {
+                continue;
+            }
+            if (set_b.size() > 5 && m_svInfo->semanticInfo(b)[3] > 500) {
+                continue;
+            }
+            if (edge->aff/edge->area > 0.6 || (edge->aff/edge->area > m_reliableMeanAffinity && edge->num > 20 && edge->num < 500)) {
+                if (max_aff < (edge->aff/edge->area)) {
+                    max_aff = edge->aff/edge->area;
+                }
+            }
+        }
+    }
+    return max_aff;
+}
+
+void Segmentation::attachSmallSegments(SupervoxelDict & mergeGraph)
+{
+    QSet<const MeanPlusEdge *> visitedEdges;
+    SupervoxelSet dend_candidates = m_dendrites.segids();
+    const SupervoxelSet & small_segs = m_smallSegments.segids();
+    SupervoxelSet attached;
+    bool keep_going = true;
+    while (keep_going) {
+        keep_going = false;
+        SupervoxelSet new_candidates;
+        foreach (auto b, (small_segs - attached)) {
+            auto set_b = m_segInfo->supervoxelList(b);
+            if (set_b.isEmpty()) {
+                set_b.insert(b);
+            }
+            if (m_processedSegments.segids().contains(b)) {
+                continue;
+            }
+            auto sem_b = sumSem(set_b);
+            auto size_b = sumSize(set_b);
+            if (set_b.size() > 10 && !isDendrite(sem_b, size_b)) {
+                continue;
+            }
+            id_type max_a = 0;
+            value_type max_aff = 0;
+            foreach (auto a, (SupervoxelSet::fromList(m_segInfo->neighbours(b)) & dend_candidates)) {
+                SupervoxelSet & set_a = m_segInfo->supervoxelList(a);
+                if (set_a.isEmpty()) {
+                    set_a.insert(a);
+                }
+                auto tmp = checkSupervoxelEdges(set_a, set_b);
+                if (tmp > m_reliableMeanAffinity && tmp > max_aff) {
+                    max_aff = tmp;
+                    max_a = a;
+                }
+            }
+            if (max_aff > m_reliableMeanAffinity) {
+                new_candidates.insert(b);
+                attached.insert(b);
+                mergeGraph[max_a].insert(b);
+                mergeGraph[b].insert(max_a);
+                qDebug() << "Merge: " << b << max_a;
+                SupervoxelSet & set_max_a = m_segInfo->supervoxelList(max_a);
+                set_max_a.insert(b);
+                keep_going = true;
+            }
+        }
+        dend_candidates = new_candidates;
+    }
+    //return attached;
+}
+
 void Segmentation::postProcess()
 {
     SupervoxelDict mergeGraph;
     matchAxons(mergeGraph);
+    attachSmallSegments(mergeGraph);
 }
