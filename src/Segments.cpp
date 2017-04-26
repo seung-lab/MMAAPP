@@ -515,6 +515,103 @@ void Segmentation::attachSmallSegments(SupervoxelDict & mergeGraph)
     //return attached;
 }
 
+id_type Segmentation::matchSpine(const SupervoxelSet & spineEnds, const SupervoxelSet & spine, const SupervoxelSet & trunks)
+{
+    value_type max_mean = 0;
+    id_type target = 0;
+    foreach (auto a, spineEnds) {
+        foreach (auto b, m_svInfo->neighbours(a)) {
+            if (spine.contains(b)) {
+                continue;
+            }
+            if (!trunks.isEmpty() && !(trunks.contains(b))) {
+                continue;
+            }
+            auto edge = m_svInfo->edge(a,b);
+            value_type tmp = edge->aff/edge->area;
+            if (tmp > max_mean) {
+                max_mean = tmp;
+                target = b;
+            }
+        }
+    }
+    if (max_mean > m_reliableMeanAffinity) {
+        return target;
+    } else {
+        return 0;
+    }
+}
+
+void Segmentation::attachSpines(SupervoxelDict & mergeGraph)
+{
+    SupervoxelSet processed;
+    SupervoxelSet shafts;
+    foreach (auto s, m_dendrites.segids()) {
+        shafts |= m_dendrites.shaft(s);
+    }
+    SupervoxelSet dendrite_ends = SupervoxelSet::fromList(m_dendrites.allFreeEnds());
+    foreach (auto a, m_spines.segids()) {
+        if (m_processedSegments.segids().contains(a)) {
+            continue;
+        }
+        SupervoxelSet & set_a = m_segInfo->supervoxelList(a);
+        if (set_a.isEmpty()) {
+            set_a.insert(a);
+        }
+        auto current_seg = a;
+        auto ends = m_spines.freeEnds(a);
+        auto b = m_spines.psd(a);
+        id_type target = 0;
+        while (true) {
+            if (ends.size() < 5) {
+                if (set_a.size() >= 3) {
+                    target = matchSpine(ends, set_a, dendrite_ends+shafts);
+                } else {
+                    target = matchSpine(ends, set_a, dendrite_ends);
+                }
+                if (target == 0 && set_a.size() >= 5) {
+                    target = matchSpine(ends, set_a, SupervoxelSet());
+                }
+            }
+            if (target != 0) {
+                auto new_seg = m_svInfo->segment(target);
+                if (m_processedSegments.segids().contains(new_seg)) {
+                    break;
+                }
+                mergeGraph[current_seg].insert(new_seg);
+                mergeGraph[new_seg].insert(current_seg);
+                //FIXME: does not look right
+                processed << current_seg << target;
+                qDebug() << "Merge: " << current_seg << new_seg << "(" << ends << target << ")";
+                SupervoxelSet & new_seg_set = m_segInfo->supervoxelList(new_seg);
+                if (new_seg_set.isEmpty()) {
+                    new_seg_set.insert(new_seg);
+                }
+                if (new_seg_set.size() < 5 && sumSize(new_seg_set) < m_sizeThreshold) {
+                    qDebug() << "Keep searching" << new_seg << target;
+                    set_a += new_seg_set;
+                    value_type psd_max = 0;
+                    auto new_b = maximumPSD(a, &psd_max);
+                    if (new_b != b) {
+                        break;
+                    }
+                    SupervoxelSet free_ends;
+                    auto seg_type = classifySegment(a, free_ends);
+                    ends = findEnds(set_a, b, SupervoxelSet(), false) & free_ends;
+                    current_seg = new_seg;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+    foreach (auto a, processed) {
+        m_processedSegments.insertSegment(a);
+    }
+}
+
 void Segmentation::postProcess()
 {
     SupervoxelDict mergeGraph;
@@ -522,5 +619,8 @@ void Segmentation::postProcess()
     matchAxons(mergeGraph);
     attachSmallSegments(mergeGraph);
     output->appendEdges(mergeGraph, 0.269995);
+    mergeGraph.clear();
+    attachSpines(mergeGraph);
+    output->appendEdges(mergeGraph, 0.269985);
     output->updateRegionGraph(m_svInfo->maxSegId());
 }

@@ -132,6 +132,8 @@ public:
     void matchAxons(SupervoxelDict & mergeGraph);
     value_type checkSupervoxelEdges(const SupervoxelSet & set_a, const SupervoxelSet & set_b);
     void attachSmallSegments(SupervoxelDict & mergeGraph);
+    void attachSpines(SupervoxelDict & mergeGraph);
+    id_type matchSpine(const SupervoxelSet & spineEnds, const SupervoxelSet & spine, const SupervoxelSet & trunks);
 private:
     size_type m_sizeThreshold;
     value_type m_reliableMeanAffinity;
