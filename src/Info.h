@@ -50,6 +50,7 @@ public:
     const QList<id_type > neighbours(id_type segid) const {return m_regionGraph[segid].keys();};
     bool atBoundary(id_type segid) {return m_boundarySupervoxels.contains(segid);};
     const MeanPlusEdge * edge(id_type a, id_type b) const {return m_regionGraph[a][b];}
+    id_type segment(id_type supervoxelId) const {return m_segmentDict[supervoxelId];}
 private:
     void readRegionGraph(const QString & filename);
     void readSupervoxelSizes(const QString & filename);
