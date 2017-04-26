@@ -49,8 +49,8 @@ public:
     const SupervoxelSet & freeEnds(id_type segid) { return m_freeends[segid]; }
     const SupervoxelSet & shaft(id_type segid) { return m_shafts[segid]; }
     id_type anchor(id_type freeend) const { return m_anchors[freeend]; }
-    virtual void insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSet & shaft);
     virtual void insertSegment(id_type segid, const SupervoxelSet & shaft) { m_segids.insert(segid); m_shafts[segid] = shaft;};
+    virtual void insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSet & freeEnds);
 private:
     SegmentDict m_segment;
     SupervoxelDict m_freeends;
