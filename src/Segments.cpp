@@ -274,7 +274,7 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
     return seg_type;
 }
 
-void Segmentation::processDendrite(id_type segid)
+bool Segmentation::processDendrite(id_type segid)
 {
     SupervoxelSet shaft;
     id_type m = largestSupervoxel(segid, NULL);
@@ -286,6 +286,7 @@ void Segmentation::processDendrite(id_type segid)
         m_dendrites.insertFreeEnds(segid, a, free_ends);
     }
     qDebug() << "Dendrite: segid:" << segid << "parts:" << segLength(segid) << "size:" << segSize(segid) << "free_ends:" << m_dendrites.freeEnds(segid).size();
+    return true;
 }
 
 void Segmentation::init()

@@ -118,7 +118,7 @@ public:
     int checkConnectivity(const SupervoxelSet & svList, const SupervoxelSet & exclude);
     SupervoxelSet findEnds(const SupervoxelSet & svList, id_type seed, const SupervoxelSet & exclude, bool free = true);
     SupervoxelSet verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList);
-    void processDendrite(id_type segid);
+    bool processDendrite(id_type segid);
 private:
     size_type m_sizeThreshold;
     Axons m_axons;
