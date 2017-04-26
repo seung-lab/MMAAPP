@@ -74,6 +74,7 @@ public:
     SupervoxelSet compositeSegments() {return m_supervoxelDict.keys().toSet();}
     SupervoxelSet allSegments() {return m_regionGraph.keys().toSet();}
     SupervoxelSet & supervoxelList(id_type segid) {return m_supervoxelDict[segid];};
+    const QList<id_type > neighbours(id_type segid) const {return m_regionGraph[segid].keys();};
 private:
     void readRegionGraph(const QString & filename);
     RegionGraph m_regionGraph;
