@@ -43,6 +43,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(MMAAPP
     src/Info.cpp
     src/Segments.cpp
+    src/Output.cpp
     src/main.cpp)
 
 target_link_libraries(MMAAPP

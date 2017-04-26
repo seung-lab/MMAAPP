@@ -77,6 +77,7 @@ public:
     SupervoxelSet & supervoxelList(id_type segid) {return m_supervoxelDict[segid];};
     const QList<id_type > neighbours(id_type segid) const {return m_regionGraph[segid].keys();};
     const MeanPlusEdge * edge(id_type a, id_type b) const {return m_regionGraph[a][b];}
+    RegionGraph & regionGraph() {return m_regionGraph;}
 private:
     void readRegionGraph(const QString & filename);
     RegionGraph m_regionGraph;

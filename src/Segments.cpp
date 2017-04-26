@@ -1,5 +1,6 @@
 #include "Segments.h"
 #include "Info.h"
+#include "Output.h"
 #include <QQueue>
 #include <QtDebug>
 
@@ -517,6 +518,9 @@ void Segmentation::attachSmallSegments(SupervoxelDict & mergeGraph)
 void Segmentation::postProcess()
 {
     SupervoxelDict mergeGraph;
+    OutputRegionGraph * output = new OutputRegionGraph(m_segInfo->regionGraph());
     matchAxons(mergeGraph);
     attachSmallSegments(mergeGraph);
+    output->appendEdges(mergeGraph, 0.269995);
+    output->updateRegionGraph(m_svInfo->maxSegId());
 }
