@@ -11,4 +11,5 @@ int main(int argc, char* argv[])
     Segmentation * segmentation = new Segmentation(svInfo, segInfo);
     segmentation->init();
     std::cout << "Finish loading" << std::endl;
+    segmentation->postProcess();
 }

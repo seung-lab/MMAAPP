@@ -127,6 +127,9 @@ public:
     SupervoxelSet verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList);
     bool processDendrite(id_type segid);
     bool processSpine(id_type segid, const SupervoxelSet & freeEnds);
+    bool checkSegEdge(const MeanPlusEdge * edge);
+    void postProcess();
+    void matchAxons(SupervoxelDict & mergeGraph);
 private:
     size_type m_sizeThreshold;
     value_type m_reliableMeanAffinity;

@@ -372,3 +372,68 @@ void Segmentation::init()
     }
 }
 
+bool Segmentation::checkSegEdge(const MeanPlusEdge * edge)
+{
+    const SupervoxelSet & seg1 = m_segInfo->supervoxelList(edge->p1);
+    const SupervoxelSet & seg2 = m_segInfo->supervoxelList(edge->p2);
+    SupervoxelSet neighbour1;
+    SupervoxelSet neighbour2;
+    if (seg1.contains(edge->v1)) {
+        neighbour1 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v1));
+        neighbour2 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v2));
+    } else {
+        neighbour1 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v2));
+        neighbour2 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v1));
+    }
+    if  ((edge->aff/edge->area) < m_reliableMeanAffinity) {
+        return false;
+    }
+
+    int len1 = (seg2 & neighbour1).size();
+    int len2 = (seg1 & neighbour2).size();
+
+    if (len1 == 1 && len2 == 1) {
+        if (edge->num > 1000) {
+            return false;
+        }
+    } else if (len1 > 1 && len2 > 1) {
+        return false;
+    }
+    return true;
+}
+
+void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
+{
+    QSet<const MeanPlusEdge *> visitedEdges;
+    SupervoxelSet processed;
+    const SupervoxelSet & axons = m_axons.segids();
+    qDebug() << "match axons:" << axons.size() << "candidates";
+    auto all_free_ends = SupervoxelSet::fromList(m_axons.allFreeEnds());
+    foreach (auto a, axons) {
+        auto matches = SupervoxelSet::fromList(m_segInfo->neighbours(a)) & axons;
+        foreach (auto b, matches) {
+            const MeanPlusEdge * seg_edge = m_segInfo->edge(a,b);
+            if (visitedEdges.contains(seg_edge)) {
+                continue;
+            }
+            visitedEdges.insert(seg_edge);
+            if (!all_free_ends.contains(seg_edge->v1) || m_processedSegments.segids().contains(seg_edge->v1)) {
+                continue;
+            }
+            if (!all_free_ends.contains(seg_edge->v2) || m_processedSegments.segids().contains(seg_edge->v2)) {
+                continue;
+            }
+            if (checkSegEdge(seg_edge)) {
+                qDebug() << qMin(a,b) << qMax(a,b);
+                mergeGraph[a].insert(b);
+                mergeGraph[b].insert(a);
+            }
+        }
+    }
+}
+
+void Segmentation::postProcess()
+{
+    SupervoxelDict mergeGraph;
+    matchAxons(mergeGraph);
+}
