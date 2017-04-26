@@ -20,6 +20,15 @@ void Dendrites::insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSe
     }
 }
 
+void Spines::insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSet & freeEnds)
+{
+    m_freeends[segid] |= freeEnds;
+    foreach (auto s, freeEnds) {
+        m_segment[s] = segid;
+        m_anchors[s] = anchor;
+    }
+}
+
 size_type Segmentation::segSize(id_type segid)
 {
     return sumSize(m_segInfo->supervoxelList(segid));
@@ -290,6 +299,19 @@ bool Segmentation::processDendrite(id_type segid)
     return true;
 }
 
+bool Segmentation::processSpine(id_type segid, const SupervoxelSet & freeEnds)
+{
+    auto p = findPSD(segid);
+    if (p == 0) {
+        return false;
+    }
+    m_spines.insertSegment(segid, p);
+    auto free_ends = findEnds(m_segInfo->supervoxelList(segid), p, SupervoxelSet(), false) & freeEnds;
+    m_spines.insertFreeEnds(segid, p, free_ends);
+    qDebug() << "Spine: segid:" << segid << "parts:" << segLength(segid) << "size:" << segSize(segid) << "free_ends:" << m_spines.freeEnds(segid).size();
+    return true;
+}
+
 void Segmentation::init()
 {
     auto segids = m_segInfo->compositeSegments();
@@ -303,6 +325,15 @@ void Segmentation::init()
             SegmentType seg_type = classifySegment(a, free_ends);
             qDebug() << "segid:" << a << "parts:" << segLength(a) << "size:" << size_a << "free_ends:" << free_ends.size() << free_ends << seg_type;
 
+            if (seg_type == Glial && length_a > 30) {
+                m_processedSegments.insertSegment(a);
+                continue;
+            }
+
+            if (length_a <= 30 && size_a < m_sizeThreshold) {
+                m_smallSegments.insertSegment(a);
+            }
+
             if ((seg_type == Axon || seg_type == Unknown) && !free_ends.isEmpty()) {
                 m_axons.insertSegment(a);
                 m_axons.insertFreeEnds(a, free_ends);
@@ -313,15 +344,26 @@ void Segmentation::init()
                 processDendrite(a);
             }
 
-            if (length_a <= 30 && size_a < m_sizeThreshold) {
+            if (length_a < 100 && size_a < m_sizeThreshold) {
+                if (processSpine(a, free_ends)) {
+                    continue;
+                }
+            }
+        } else if (length_a < 5 && size_a < m_sizeThreshold) {
                 m_smallSegments.insertSegment(a);
-                continue;
-            }
+                auto p = findPSD(a);
+                if (p != 0) {
+                    m_spines.insertSegment(a, p);
+                    m_spines.insertFreeEnds(a, p, m_segInfo->supervoxelList(a));
+                }
+        }
 
-            if (seg_type == Glial && length_a > 30) {
-                m_processedSegments.insertSegment(a);
-                continue;
-            }
+        foreach (auto a, m_segInfo->allSegments() - segids) {
+                m_smallSegments.insertSegment(a);
+                if (m_svInfo->semanticInfo(a)[3] > 200) {
+                    m_spines.insertSegment(a, a);
+                    m_spines.insertFreeEnds(a, a, SupervoxelSet({a}));
+                }
 
         }
         //id_type shaft_a = 0;

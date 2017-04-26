@@ -71,9 +71,11 @@ public:
     }
     virtual ~Spines() {}
     id_type segid(id_type freeend) const { return m_segment[freeend]; }
-    QSet<id_type > & freeends(id_type segid) {return m_freeends[segid];}
+    QSet<id_type > & freeEnds(id_type segid) {return m_freeends[segid];}
     id_type psd(id_type segid) const { return m_psd[segid]; }
     id_type anchor(id_type freeend) const { return m_anchors[freeend]; }
+    virtual void insertSegment(id_type segid, id_type psd) { m_segids.insert(segid); m_psd[segid] = psd;};
+    virtual void insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSet & freeEnds);
 private:
     SegmentDict m_segment;
     SupervoxelDict m_freeends;
@@ -120,6 +122,7 @@ public:
     SupervoxelSet findEnds(const SupervoxelSet & svList, id_type seed, const SupervoxelSet & exclude, bool free = true);
     SupervoxelSet verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList);
     bool processDendrite(id_type segid);
+    bool processSpine(id_type segid, const SupervoxelSet & freeEnds);
 private:
     size_type m_sizeThreshold;
     Axons m_axons;
