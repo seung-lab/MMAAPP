@@ -198,11 +198,14 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
             }
         }
         if (queue.isEmpty() && !children.isEmpty()) {
+            if (!free) {
+                ends.clear();
+            }
             foreach (auto c, children) {
                 queue.enqueue(c);
-            }
-            if (!free) {
-                ends = children;
+                if (!free && !m_svInfo->atBoundary(c)) {
+                    ends.insert(c);
+                }
             }
             children.clear();
             depth += 1;
