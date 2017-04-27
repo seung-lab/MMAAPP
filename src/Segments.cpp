@@ -266,7 +266,9 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
     size_type max_size = 0;
     auto largest_sv = largestSupervoxel(segid, &max_size);
     auto seg_type = checkSemantic(total_sem, total_size);
-
+    if ((seg_type == Segmentation::Glial || seg_type == Segmentation::Dendrite) && segLength(segid) > 30 && total_size > m_sizeThreshold) {
+        return seg_type;
+    }
     int cc = checkConnectivity(m_segInfo->supervoxelList(segid), QSet<id_type >({largest_sv}));
     if (total_size > m_sizeThreshold && (cc > 2 && max_size > (0.5 * total_size))) {
         if (seg_type == Segmentation::Unknown) {
@@ -277,6 +279,9 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
     auto ends = findEnds(m_segInfo->supervoxelList(segid), largest_sv, SupervoxelSet());
     if (cc == 1) {
         ends.insert(largest_sv);
+    }
+    if (ends.size() > 100) {
+        return seg_type;
     }
 
     freeEnds |= verifyFreeEnds(ends, m_segInfo->supervoxelList(segid));
