@@ -1,15 +1,15 @@
 #include "Info.h"
 #include "Segments.h"
-#include <iostream>
+#include <QtDebug>
 
 int main(int argc, char* argv[])
 {
-    std::cout << "Start loading" << std::endl;
+    qDebug() << "Start loading";
     SupervoxelInfo * svInfo = new SupervoxelInfo();
     SegmentInfo * segInfo = new SegmentInfo();
     svInfo->agglomerate(segInfo->supervoxelDict());
     Segmentation * segmentation = new Segmentation(svInfo, segInfo);
     segmentation->init();
-    std::cout << "Finish loading" << std::endl;
+    qDebug() << "Finish loading";
     segmentation->postProcess();
 }
