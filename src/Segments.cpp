@@ -447,8 +447,8 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
 value_type Segmentation::checkSupervoxelEdges(const SupervoxelSet & set_a, const SupervoxelSet & set_b)
 {
     value_type max_aff = 0;
-    foreach(auto a, set_a) {
-        foreach(auto b, (set_b & SupervoxelSet::fromList(m_svInfo->neighbours(a)))) {
+    foreach(auto b, set_b) {
+        foreach(auto a, (set_a & SupervoxelSet::fromList(m_svInfo->neighbours(b)))) {
             const MeanPlusEdge * edge = m_svInfo->edge(a,b);
             if (edge->num > 1000) {
                 continue;
