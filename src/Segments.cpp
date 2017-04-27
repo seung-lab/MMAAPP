@@ -359,22 +359,22 @@ void Segmentation::init()
                 }
             }
         } else if (length_a < 5 && size_a < m_sizeThreshold) {
-                m_smallSegments.insertSegment(a);
-                auto p = findPSD(a);
-                if (p != 0) {
-                    m_spines.insertSegment(a, p);
-                    m_spines.insertFreeEnds(a, p, m_segInfo->supervoxelList(a));
-                }
+            m_smallSegments.insertSegment(a);
+            auto p = findPSD(a);
+            if (p != 0) {
+                m_spines.insertSegment(a, p);
+                m_spines.insertFreeEnds(a, p, m_segInfo->supervoxelList(a));
+            }
+        }
+    }
+
+    foreach (auto a, m_segInfo->allSegments() - segids) {
+        m_smallSegments.insertSegment(a);
+        if (m_svInfo->semanticInfo(a)[3] > 200) {
+            m_spines.insertSegment(a, a);
+            m_spines.insertFreeEnds(a, a, SupervoxelSet({a}));
         }
 
-        foreach (auto a, m_segInfo->allSegments() - segids) {
-                m_smallSegments.insertSegment(a);
-                if (m_svInfo->semanticInfo(a)[3] > 200) {
-                    m_spines.insertSegment(a, a);
-                    m_spines.insertFreeEnds(a, a, SupervoxelSet({a}));
-                }
-
-        }
     }
 }
 
