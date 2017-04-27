@@ -602,7 +602,7 @@ void Segmentation::attachSpines(SupervoxelDict & mergeGraph)
                         break;
                     }
                     SupervoxelSet free_ends;
-                    auto seg_type = classifySegment(a, free_ends);
+                    classifySegment(a, free_ends);
                     ends = findEnds(set_a, b, SupervoxelSet(), false) & free_ends;
                     current_seg = new_seg;
                 } else {
