@@ -393,7 +393,9 @@ bool Segmentation::checkSegEdge(const MeanPlusEdge * edge)
         neighbour1 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v2));
         neighbour2 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v1));
     }
-    if  ((edge->aff/edge->area) < m_reliableMeanAffinity) {
+    const MeanPlusEdge * supervoxelEdge = m_svInfo->edge(edge->v1, edge->v2);
+    if  ((supervoxelEdge->aff/supervoxelEdge->area) < m_reliableMeanAffinity) {
+    //if  ((edge->aff/edge->area) < m_reliableMeanAffinity) {
         return false;
     }
 
