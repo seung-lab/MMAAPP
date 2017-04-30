@@ -95,9 +95,10 @@ public:
         Dendrite,
         Glial
     };
-    Segmentation(SupervoxelInfo * svInfo, SegmentInfo * segInfo)
+    Segmentation(SupervoxelInfo * svInfo, SegmentInfo * segInfo, double agglomerationThreshold, double postprocessThreshold)
         :m_sizeThreshold(1000000)
-        ,m_reliableMeanAffinity(0.17)
+        ,m_agglomerationMeanAffinity(agglomerationThreshold)
+        ,m_reliableMeanAffinity(postprocessThreshold)
         ,m_axons()
         ,m_dendrites()
         ,m_spines()
@@ -136,6 +137,7 @@ public:
     id_type matchSpine(const SupervoxelSet & spineEnds, const SupervoxelSet & spine, const SupervoxelSet & trunks);
 private:
     size_type m_sizeThreshold;
+    value_type m_agglomerationMeanAffinity;
     value_type m_reliableMeanAffinity;
     Axons m_axons;
     Dendrites m_dendrites;

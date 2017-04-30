@@ -624,9 +624,9 @@ void Segmentation::postProcess()
     OutputRegionGraph * output = new OutputRegionGraph(m_segInfo->regionGraph());
     matchAxons(mergeGraph);
     attachSmallSegments(mergeGraph);
-    output->appendEdges(mergeGraph, 0.269995);
+    output->appendEdges(mergeGraph, m_agglomerationMeanAffinity - 0.000005);
     mergeGraph.clear();
     attachSpines(mergeGraph);
-    output->appendEdges(mergeGraph, 0.269985);
+    output->appendEdges(mergeGraph, m_agglomerationMeanAffinity - 0.000015);
     output->updateRegionGraph(m_svInfo->maxSegId());
 }
