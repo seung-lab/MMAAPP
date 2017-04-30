@@ -105,6 +105,7 @@ public:
         ,m_smallSegments()
         ,m_processedSegments()
     {
+        qDebug("Agglomeration threshold: %f, post process threshold: %f", agglomerationThreshold, postprocessThreshold);
         m_svInfo = svInfo;
         m_segInfo = segInfo;
     }

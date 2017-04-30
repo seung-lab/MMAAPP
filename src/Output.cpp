@@ -7,7 +7,7 @@
 void OutputRegionGraph::appendEdges(const SupervoxelDict & mergeGraph, value_type threshold)
 {
     SupervoxelSet visited;
-    qDebug() << "Merge" << mergeGraph.keys().size() << "segments";
+    qDebug() << "Merge" << mergeGraph.keys().size() << "segments at threshold:" << threshold ;
     foreach (auto p, mergeGraph.keys()) {
         QVector<id_type> segGroup;
         if (visited.contains(p)) {
