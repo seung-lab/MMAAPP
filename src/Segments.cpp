@@ -117,7 +117,8 @@ id_type Segmentation::findPSD(id_type segid)
 
 bool Segmentation::isGlial(QVector<value_type > sem, size_type vol)
 {
-    if (sem[2] > 0.5*vol) {
+    //if (sem[2] > 0.5*vol) {
+    if (sem[0] < 0.5*vol && sem[1] < 0.5*vol) {
         return true;
     }
     return false;
