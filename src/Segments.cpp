@@ -435,8 +435,7 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
             }
             if (checkSegEdge(seg_edge)) {
                 qDebug() << qMin(a,b) << qMax(a,b);
-                //FIXME, this is wrong
-                processed << seg_edge->v1 << seg_edge->v2;
+                processed << a << b;
                 mergeGraph[a].insert(b);
                 mergeGraph[b].insert(a);
             }
@@ -589,8 +588,7 @@ void Segmentation::attachSpines(SupervoxelDict & mergeGraph)
                 }
                 mergeGraph[current_seg].insert(new_seg);
                 mergeGraph[new_seg].insert(current_seg);
-                //FIXME: does not look right
-                processed << current_seg << target;
+                processed << current_seg << new_seg;
                 qDebug() << "Merge: " << current_seg << new_seg << "(" << ends << target << ")";
                 SupervoxelSet & new_seg_set = m_segInfo->supervoxelList(new_seg);
                 if (new_seg_set.isEmpty()) {
