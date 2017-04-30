@@ -338,7 +338,7 @@ void Segmentation::init()
                 continue;
             }
 
-            if (length_a <= 30 && size_a < m_sizeThreshold) {
+            if (length_a <= 60 && size_a < m_sizeThreshold) {
                 m_smallSegments.insertSegment(a);
             }
 
