@@ -262,8 +262,9 @@ SupervoxelSet Segmentation::verifyFreeEnds(const SupervoxelSet & ends, const Sup
 
 Segmentation::SegmentType Segmentation::classifySegment(id_type segid, SupervoxelSet & freeEnds)
 {
-    auto total_size = segSize(segid);
-    auto total_sem = segSem(segid);
+    const SupervoxelSet & svList = m_segInfo->supervoxelList(segid);
+    auto total_size = sumSize(svList);
+    auto total_sem = sumSem(svList);
     size_type max_size = 0;
     auto largest_sv = largestSupervoxel(segid, &max_size);
     auto seg_type = checkSemantic(total_sem, total_size);
@@ -272,6 +273,15 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
     }
     int cc = checkConnectivity(m_segInfo->supervoxelList(segid), QSet<id_type >({largest_sv}));
     if (total_size > m_sizeThreshold && (cc > 2 && max_size > (0.5 * total_size))) {
+        auto sub_size = total_size - max_size;
+        if (sub_size > m_sizeThreshold) {
+            auto sub_sem = sumSem(svList - SupervoxelSet({largest_sv}));
+            auto sub_seg_type = checkSemantic(sub_sem, sub_size);
+            if (sub_seg_type == Segmentation::Glial) {
+                qDebug() << "Potential Dendrite Glial Merger:" << segid;
+                seg_type = Segmentation::Glial;
+            }
+        }
         if (seg_type == Segmentation::Unknown) {
             seg_type = Segmentation::Dendrite;
         }
