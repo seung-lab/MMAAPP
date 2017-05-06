@@ -153,9 +153,9 @@ Segmentation::SegmentType Segmentation::checkSemantic(QVector<value_type > sem, 
     return seg_type;
 }
 
-int Segmentation::checkConnectivity(const SupervoxelSet & svList, const SupervoxelSet & exclude)
+SupervoxelSet Segmentation::checkConnectivity(const SupervoxelSet & svList, const SupervoxelSet & exclude)
 {
-    int cc = 0;
+    SupervoxelSet cc;
     auto visited = exclude;
     foreach(auto root, svList) {
         if (visited.contains(root)) {
@@ -176,7 +176,7 @@ int Segmentation::checkConnectivity(const SupervoxelSet & svList, const Supervox
                 queue.enqueue(neighbour);
             }
         }
-        cc += 1;
+        cc.insert(root);
     }
     return cc;
 }
@@ -252,7 +252,7 @@ SupervoxelSet Segmentation::verifyFreeEnds(const SupervoxelSet & ends, const Sup
             continue;
         }
         end_segments.insert(s);
-        int cc = checkConnectivity(svList, end_segments);
+        int cc = checkConnectivity(svList, end_segments).size();
         if (cc == 1) {
             free_ends.insert(s);
         }
@@ -271,7 +271,7 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
     if ((seg_type == Segmentation::Glial || seg_type == Segmentation::Dendrite) && segLength(segid) > 30 && total_size > m_sizeThreshold) {
         return seg_type;
     }
-    int cc = checkConnectivity(m_segInfo->supervoxelList(segid), QSet<id_type >({largest_sv}));
+    int cc = checkConnectivity(m_segInfo->supervoxelList(segid), QSet<id_type >({largest_sv})).size();
     if (total_size > m_sizeThreshold && (cc > 2 && max_size > (0.5 * total_size))) {
         auto sub_size = total_size - max_size;
         if (sub_size > m_sizeThreshold) {

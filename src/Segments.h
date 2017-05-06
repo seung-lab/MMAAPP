@@ -124,7 +124,7 @@ public:
     bool isGlial(QVector<value_type > sem, size_type vol);
     bool isAxon(QVector<value_type > sem, size_type vol);
     bool isDendrite(QVector<value_type > sem, size_type vol);
-    int checkConnectivity(const SupervoxelSet & svList, const SupervoxelSet & exclude);
+    SupervoxelSet checkConnectivity(const SupervoxelSet & svList, const SupervoxelSet & exclude);
     SupervoxelSet findEnds(const SupervoxelSet & svList, id_type seed, const SupervoxelSet & exclude, bool free = true);
     SupervoxelSet verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList);
     bool processDendrite(id_type segid);
