@@ -278,7 +278,7 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
             auto sub_sem = sumSem(svList - SupervoxelSet({largest_sv}));
             auto sub_seg_type = checkSemantic(sub_sem, sub_size);
             if (sub_seg_type == Segmentation::Glial) {
-                qDebug() << "Potential Dendrite Glial Merger:" << segid;
+                qDebug() << "Potential Dendrite Glial Merger:" << segid << "size:" << sub_size << "sem:" << sub_sem;
                 seg_type = Segmentation::Glial;
             }
         }
