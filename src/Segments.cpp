@@ -268,6 +268,7 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
     size_type max_size = 0;
     auto largest_sv = largestSupervoxel(segid, &max_size);
     auto seg_type = checkSemantic(total_sem, total_size);
+    qDebug() << "Largest supervoxel:" << largest_sv << "(" << max_size << ")," << "Semantic info" << total_sem;
     if (seg_type == Segmentation::Glial && segLength(segid) > 30 && total_size > m_sizeThreshold) {
         return seg_type;
     }
@@ -310,6 +311,7 @@ bool Segmentation::processDendrite(id_type segid)
     SupervoxelSet branches = svList - shaft;
     SupervoxelSet anchors = branches & SupervoxelSet::fromList(m_svInfo->neighbours(m));
     SupervoxelSet anchors_cc = checkConnectivity(anchors, SupervoxelSet());
+    qDebug() << "anchor supervoxels" << anchors.size() << "connect component:" << anchors_cc.size();
     foreach (auto a, anchors_cc) {
         auto free_ends = findEnds(m_segInfo->supervoxelList(segid), a, shaft);
         m_dendrites.insertFreeEnds(segid, a, free_ends);
