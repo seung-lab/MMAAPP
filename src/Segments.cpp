@@ -599,6 +599,9 @@ void Segmentation::attachSpines(SupervoxelDict & mergeGraph)
                 if (m_processedSegments.segids().contains(new_seg)) {
                     break;
                 }
+                if (current_seg == new_seg) {
+                    break;
+                }
                 mergeGraph[current_seg].insert(new_seg);
                 mergeGraph[new_seg].insert(current_seg);
                 processed << current_seg << new_seg;
