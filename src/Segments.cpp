@@ -542,13 +542,12 @@ id_type Segmentation::matchSpine(const SupervoxelSet & spineEnds, const Supervox
     value_type max_mean = 0;
     id_type target = 0;
     foreach (auto a, spineEnds) {
-        foreach (auto b, m_svInfo->neighbours(a)) {
-            if (spine.contains(b)) {
-                continue;
-            }
-            if (!trunks.isEmpty() && !(trunks.contains(b))) {
-                continue;
-            }
+        auto candidates = SupervoxelSet::fromList(m_svInfo->neighbours(a));
+        if (!trunks.isEmpty()) {
+            candidates &= trunks;
+        }
+        candidates -= spine;
+        foreach (auto b, candidates) {
             auto edge = m_svInfo->edge(a,b);
             value_type tmp = edge->aff/edge->area;
             if (tmp > max_mean) {
