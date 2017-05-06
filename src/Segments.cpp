@@ -268,11 +268,11 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
     size_type max_size = 0;
     auto largest_sv = largestSupervoxel(segid, &max_size);
     auto seg_type = checkSemantic(total_sem, total_size);
-    if ((seg_type == Segmentation::Glial || seg_type == Segmentation::Dendrite) && segLength(segid) > 30 && total_size > m_sizeThreshold) {
+    if (seg_type == Segmentation::Glial && segLength(segid) > 30 && total_size > m_sizeThreshold) {
         return seg_type;
     }
     int cc = checkConnectivity(m_segInfo->supervoxelList(segid), QSet<id_type >({largest_sv})).size();
-    if (total_size > m_sizeThreshold && (cc > 2 && max_size > (0.5 * total_size))) {
+    if ((total_size > m_sizeThreshold && cc > 2 && max_size > 0.5 * total_size) || (seg_type == Segmentation::Dendrite && segLength(segid) > 30 && total_size > m_sizeThreshold)) {
         auto sub_size = total_size - max_size;
         if (sub_size > m_sizeThreshold) {
             auto sub_sem = sumSem(svList - SupervoxelSet({largest_sv}));
