@@ -541,6 +541,9 @@ id_type Segmentation::matchSpine(const SupervoxelSet & spineEnds, const Supervox
 {
     value_type max_mean = 0;
     id_type target = 0;
+    if (spine.size() < 5 && trunks.isEmpty()) {
+        return 0;
+    }
     foreach (auto a, spineEnds) {
         auto candidates = SupervoxelSet::fromList(m_svInfo->neighbours(a));
         if (!trunks.isEmpty()) {
@@ -566,11 +569,6 @@ id_type Segmentation::matchSpine(const SupervoxelSet & spineEnds, const Supervox
 void Segmentation::attachSpines(SupervoxelDict & mergeGraph)
 {
     SupervoxelSet processed;
-    SupervoxelSet shafts;
-    foreach (auto s, m_dendrites.segids()) {
-        shafts |= m_dendrites.shaft(s);
-    }
-    SupervoxelSet dendrite_ends = SupervoxelSet::fromList(m_dendrites.allFreeEnds());
     foreach (auto a, m_spines.segids()) {
         if (m_processedSegments.segids().contains(a)) {
             continue;
@@ -583,7 +581,14 @@ void Segmentation::attachSpines(SupervoxelDict & mergeGraph)
         auto ends = m_spines.freeEnds(a);
         auto b = m_spines.psd(a);
         id_type target = 0;
+        SupervoxelSet shafts;
+        SupervoxelSet dendrite_ends;
         while (true) {
+            auto dend_cands = SupervoxelSet::fromList(m_segInfo->neighbours(current_seg)) & m_dendrites.segids();
+            foreach (auto s, dend_cands) {
+                shafts |= m_dendrites.shaft(s);
+                dendrite_ends |= m_dendrites.freeEnds(s);
+            }
             if (ends.size() < 5) {
                 if (set_a.size() >= 3) {
                     target = matchSpine(ends, set_a, dendrite_ends+shafts);
