@@ -8,6 +8,7 @@
 std::vector<MeanPlusEdge *> generate_edges(const QVector<QByteArray *> lines)
 {
     std::vector<MeanPlusEdge * > edges;
+    edges.reserve(lines.size());
     foreach (auto line, lines) {
         edges.push_back(new MeanPlusEdge(line));
     }
