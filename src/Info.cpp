@@ -5,11 +5,11 @@
 #include <QtDebug>
 #include <QtConcurrent>
 
-QVector<MeanPlusEdge *> generate_edges(const QVector<QByteArray *> lines)
+std::vector<MeanPlusEdge *> generate_edges(const QVector<QByteArray *> lines)
 {
-    QVector<MeanPlusEdge * > edges;
+    std::vector<MeanPlusEdge * > edges;
     foreach (auto line, lines) {
-        edges << new MeanPlusEdge(line);
+        edges.push_back(new MeanPlusEdge(line));
     }
     return edges;
 }
@@ -173,8 +173,9 @@ void SupervoxelInfo::readRegionGraph(const QString & filename)
     uint64_t num_edges = metaData[2].toLongLong();
     int batch_size = 1000000;
     QVector<QByteArray *> rg_entries;
-    QVector<QFuture<QVector<MeanPlusEdge *> > > futures;
-    QVector<MeanPlusEdge *> edges;
+    QVector<QFuture<std::vector<MeanPlusEdge *> > > futures;
+    std::vector<MeanPlusEdge *> edges;
+    edges.reserve(num_edges);
     m_regionGraph.reserve(m_maxSegId+1);
     for (unsigned int i = 0; i <= m_maxSegId; i++) {
         m_regionGraph.append(QHash<id_type, MeanPlusEdge * >());
@@ -190,7 +191,8 @@ void SupervoxelInfo::readRegionGraph(const QString & filename)
         futures << QtConcurrent::run(generate_edges, QVector<QByteArray *>(rg_entries));
     }
     foreach (auto f, futures) {
-        edges += f.result();
+        auto partial_results = f.result();
+        edges.insert(edges.end(), partial_results.begin(), partial_results.end());
     }
     foreach (auto edge, edges) {
         m_regionGraph[edge->p1][edge->p2] = edge;
