@@ -37,7 +37,7 @@ void SupervoxelInfo::loadSupervoxelInfo()
     readBoundingBoxes("bbox_volume.in");
     readSemanticInfo("sem_volume.in");
     readMST("test_mst.in");
-    findBoundaries(QVector<coord_type > ({1,1,1,2048,2048,256}));
+    findBoundaries(QVector<coord_type > ({10241, 7681, 1, 65015, 43715, 1002}));
 }
 
 void SupervoxelInfo::readBoundingBoxes(const QString & filename)
