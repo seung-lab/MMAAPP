@@ -312,9 +312,14 @@ bool Segmentation::processDendrite(id_type segid)
     SupervoxelSet anchors = branches & SupervoxelSet::fromList(m_svInfo->neighbours(m));
     SupervoxelSet anchors_cc = checkConnectivity(anchors, SupervoxelSet());
     qDebug() << "anchor supervoxels" << anchors.size() << "connect component:" << anchors_cc.size();
-    foreach (auto a, anchors_cc) {
-        auto free_ends = findEnds(m_segInfo->supervoxelList(segid), a, shaft);
-        m_dendrites.insertFreeEnds(segid, a, free_ends);
+    if (anchors_cc.size() > 10000) {
+        auto free_ends = findEnds(m_segInfo->supervoxelList(segid), m, SupervoxelSet());
+        m_dendrites.insertFreeEnds(segid, m, free_ends);
+    } else {
+        foreach (auto a, anchors_cc) {
+            auto free_ends = findEnds(m_segInfo->supervoxelList(segid), a, shaft);
+            m_dendrites.insertFreeEnds(segid, a, free_ends);
+        }
     }
     qDebug() << "Dendrite: segid:" << segid << "parts:" << segLength(segid) << "size:" << segSize(segid) << "free_ends:" << m_dendrites.freeEnds(segid).size();
     return true;
