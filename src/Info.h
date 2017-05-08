@@ -15,7 +15,7 @@ typedef double count_type;
 class MeanPlusEdge
 {
 public:
-    MeanPlusEdge(const QByteArray & line);
+    MeanPlusEdge(const QByteArray * line);
     id_type p1;
     id_type p2;
     value_type sum;
