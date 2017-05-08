@@ -17,7 +17,7 @@ QVector<MeanPlusEdge *> generate_edges(const QVector<QByteArray *> lines)
 MeanPlusEdge::MeanPlusEdge(const QByteArray * line)
     :p1(0),p2(0),sum(0),num(0),v1(0),v2(0),aff(0),area(0)
 {
-    QList<QByteArray> data = line->split(' ');
+    QList<QByteArray> data = line->trimmed().split(' ');
     p1 = data[0].toLongLong();
     p2 = data[1].toLongLong();
     sum = data[2].toDouble();
@@ -180,7 +180,7 @@ void SupervoxelInfo::readRegionGraph(const QString & filename)
         m_regionGraph.append(QHash<id_type, MeanPlusEdge * >());
     }
     for (unsigned int i = 0; i < num_edges; i++) {
-        rg_entries << new QByteArray(inputFile.readLine().trimmed());
+        rg_entries << new QByteArray(inputFile.readLine());
         if ((i > 0) && (i % batch_size == 0)) {
             futures << QtConcurrent::run(generate_edges, QVector<QByteArray *>(rg_entries));
             rg_entries.clear();
@@ -244,7 +244,7 @@ void SegmentInfo::readRegionGraph(const QString & filename)
     uint64_t num_edges = metaData[2].toLongLong();
 
     for (unsigned int i = 0; i < num_edges; i++) {
-        QByteArray * line = new QByteArray(inputFile.readLine().trimmed());
+        QByteArray * line = new QByteArray(inputFile.readLine());
         MeanPlusEdge * edge = new MeanPlusEdge(line);
         if (!m_regionGraph.contains(edge->p1)) {
             m_regionGraph[edge->p1] = QHash<id_type, MeanPlusEdge * >();
