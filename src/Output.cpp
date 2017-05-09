@@ -48,7 +48,7 @@ QString OutputRegionGraph::printEdge(const MeanPlusEdge * edge, value_type meanA
     } else {
         sum_aff *= 0.9995;
     }
-    return QString("%1 %2 %3 %4 %5 %6 %7 %8\n").arg(edge->p1).arg(edge->p2).arg(sum_aff).arg(area).arg(edge->v1).arg(edge->v2).arg(edge->aff).arg(edge->area);
+    return QString("%1 %2 %3 %4 %5 %6 %7 %8\n").arg(edge->p1).arg(edge->p2).arg(sum_aff, 0, 'g', 17).arg(area).arg(edge->v1).arg(edge->v2).arg(edge->aff,  0, 'g', 17).arg(edge->area);
 }
 
 void OutputRegionGraph::updateRegionGraph(id_type maxSegId)
