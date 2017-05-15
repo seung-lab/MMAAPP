@@ -524,8 +524,8 @@ void Segmentation::attachSmallSegments(SupervoxelDict & mergeGraph)
                 mergeGraph[max_a].insert(b);
                 mergeGraph[b].insert(max_a);
                 qDebug() << "Merge: " << b << max_a;
-                SupervoxelSet & set_max_a = m_segInfo->supervoxelList(max_a);
-                set_max_a.insert(b);
+                //SupervoxelSet & set_max_a = m_segInfo->supervoxelList(max_a);
+                //set_max_a.insert(b);
                 keep_going = true;
             }
         }
