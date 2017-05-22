@@ -418,7 +418,7 @@ bool Segmentation::checkSegEdge(const MeanPlusEdge * edge)
     int len2 = (seg1 & neighbour2).size();
 
     if (len1 == 1 && len2 == 1) {
-        if (edge->num > 1000) {
+        if (edge->num > 1500) {
             return false;
         }
     } else if (len1 > 1 && len2 > 1) {
@@ -467,7 +467,7 @@ value_type Segmentation::checkSupervoxelEdges(const SupervoxelSet & set_a, const
     foreach(auto b, set_b) {
         foreach(auto a, (set_a & SupervoxelSet::fromList(m_svInfo->neighbours(b)))) {
             const MeanPlusEdge * edge = m_svInfo->edge(a,b);
-            if (edge->num > 1000) {
+            if (edge->num > 1500) {
                 continue;
             }
             if (set_b.size() > 5 && m_svInfo->semanticInfo(b)[3] > 500) {
