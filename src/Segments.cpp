@@ -292,7 +292,8 @@ Segmentation::SegmentType Segmentation::classifySegment(id_type segid, Supervoxe
     if (cc == 1) {
         ends.insert(largest_sv);
     }
-    if (ends.size() > 100) {
+    qDebug() << "Potential free ends: " << ends.size();
+    if (seg_type != Segmentation::Axon) {
         return seg_type;
     }
 
