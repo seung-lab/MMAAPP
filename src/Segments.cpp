@@ -7,7 +7,7 @@
 void Axons::insertFreeEnds(id_type segid, const SupervoxelSet & freeEnds)
 {
     m_freeends[segid] |= freeEnds;
-    foreach (auto s, freeEnds) {
+    for (auto s : freeEnds) {
         m_segment[s] = segid;
     }
 }
@@ -15,7 +15,7 @@ void Axons::insertFreeEnds(id_type segid, const SupervoxelSet & freeEnds)
 void Dendrites::insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSet & freeEnds)
 {
     m_freeends[segid] |= freeEnds;
-    foreach (auto s, freeEnds) {
+    for (auto s : freeEnds) {
         m_segment[s] = segid;
         m_anchors[s] = anchor;
     }
@@ -24,7 +24,7 @@ void Dendrites::insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSe
 void Spines::insertFreeEnds(id_type segid, id_type anchor, const SupervoxelSet & freeEnds)
 {
     m_freeends[segid] |= freeEnds;
-    foreach (auto s, freeEnds) {
+    for (auto s : freeEnds) {
         m_segment[s] = segid;
         m_anchors[s] = anchor;
     }
@@ -38,7 +38,7 @@ size_type Segmentation::segSize(id_type segid)
 size_type Segmentation::sumSize(const SupervoxelSet & svList)
 {
     size_type sizeSum = 0;
-    foreach (auto s, svList) {
+    for (auto s : svList) {
         sizeSum += m_svInfo->supervoxelSize(s);
     }
     return sizeSum;
@@ -52,7 +52,7 @@ QVector<value_type > Segmentation::segSem(id_type segid)
 QVector<value_type > Segmentation::sumSem(const SupervoxelSet & svList)
 {
     QVector<value_type > semSum({0,0,0,0});
-    foreach (auto s, svList) {
+    for (auto s : svList) {
         const QVector<value_type > & sSem = m_svInfo->semanticInfo(s);
         for (int i = 0; i < 4; i++) {
             semSum[i] += sSem[i];
@@ -71,7 +71,7 @@ id_type Segmentation::largestSupervoxel(id_type segid, size_type * max)
     id_type c = 0;
     size_type c_size = 0;
     SupervoxelSet & svList = m_segInfo->supervoxelList(segid);
-    foreach (auto s, svList) {
+    for (auto s : svList) {
         if (c_size < m_svInfo->supervoxelSize(s)) {
             c = s;
             c_size = m_svInfo->supervoxelSize(s);
@@ -88,7 +88,7 @@ id_type Segmentation::maximumPSD(id_type segid, value_type * max)
     id_type c = 0;
     value_type c_value = 0;
     SupervoxelSet & svList = m_segInfo->supervoxelList(segid);
-    foreach (auto s, svList) {
+    for (auto s : svList) {
         const QVector<value_type > & sSem = m_svInfo->semanticInfo(s);
         if (c_value < sSem[3]) {
             c = s;
@@ -157,7 +157,7 @@ SupervoxelSet Segmentation::checkConnectivity(const SupervoxelSet & svList, cons
 {
     SupervoxelSet cc;
     auto visited = exclude;
-    foreach(auto root, svList) {
+    for (auto root : svList) {
         if (visited.contains(root)) {
             continue;
         }
@@ -169,7 +169,7 @@ SupervoxelSet Segmentation::checkConnectivity(const SupervoxelSet & svList, cons
                 continue;
             }
             visited.insert(root);
-            foreach(auto neighbour,  m_svInfo->neighbours(root)) {
+            for (auto neighbour :  m_svInfo->neighbours(root)) {
                 if (visited.contains(neighbour) || !svList.contains(neighbour)) {
                     continue;
                 }
@@ -194,7 +194,7 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
         if (!visited.contains(root)) {
             visited.insert(root);
             bool atEnd = true;
-            foreach(auto neighbour,  m_svInfo->neighbours(root)) {
+            for (auto neighbour : m_svInfo->neighbours(root)) {
                 if (visited.contains(neighbour) || queue.contains(neighbour) || !svList.contains(neighbour)) {
                     continue;
                 }
@@ -212,7 +212,7 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
             if (!free) {
                 ends.clear();
             }
-            foreach (auto c, children) {
+            for (auto c : children) {
                 queue.enqueue(c);
                 if (!free && !m_svInfo->atBoundary(c)) {
                     ends.insert(c);
@@ -231,14 +231,14 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
 SupervoxelSet Segmentation::verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList)
 {
     SupervoxelSet free_ends;
-    foreach(auto s, ends) {
+    for (auto s : ends) {
         SupervoxelSet end_segments;
         bool near_boundary = false;
         if (m_svInfo->atBoundary(s)) {
             continue;
         }
         SupervoxelSet neighbours_of_neighbours;
-        foreach(auto neighbour, m_svInfo->neighbours(s)) {
+        for (auto neighbour : m_svInfo->neighbours(s)) {
             if (svList.contains(neighbour)) {
                 if (m_svInfo->atBoundary(neighbour)) {
                     near_boundary = true;
@@ -313,7 +313,7 @@ bool Segmentation::processDendrite(id_type segid)
     SupervoxelSet anchors = branches & SupervoxelSet::fromList(m_svInfo->neighbours(m));
     SupervoxelSet anchors_cc = checkConnectivity(anchors, SupervoxelSet());
     qDebug() << "anchor supervoxels" << anchors.size() << "connect component:" << anchors_cc.size();
-    foreach (auto a, anchors_cc) {
+    for (auto a : anchors_cc) {
         auto free_ends = findEnds(m_segInfo->supervoxelList(segid), a, shaft);
         m_dendrites.insertFreeEnds(segid, a, free_ends);
     }
@@ -338,7 +338,7 @@ void Segmentation::init()
 {
     auto segids = m_segInfo->compositeSegments();
     qDebug() << segids.size() << "segments";
-    foreach (auto a, segids) {
+    for (auto a : segids) {
         auto size_a = segSize(a);
         auto sem_a = segSem(a);
         auto length_a = segLength(a);
@@ -385,7 +385,7 @@ void Segmentation::init()
         }
     }
 
-    foreach (auto a, m_segInfo->allSegments() - segids) {
+    for (auto a : m_segInfo->allSegments() - segids) {
         m_smallSegments.insertSegment(a);
         if (m_svInfo->semanticInfo(a)[3] > 200) {
             m_spines.insertSegment(a, a);
@@ -434,9 +434,9 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
     const SupervoxelSet & axons = m_axons.segids();
     qDebug() << "match axons:" << axons.size() << "candidates";
     auto all_free_ends = SupervoxelSet::fromList(m_axons.allFreeEnds());
-    foreach (auto a, axons) {
+    for (auto a : axons) {
         auto matches = SupervoxelSet::fromList(m_segInfo->neighbours(a)) & axons;
-        foreach (auto b, matches) {
+        for (auto b : matches) {
             const MeanPlusEdge * seg_edge = m_segInfo->edge(a,b);
             if (visitedEdges.contains(seg_edge)) {
                 continue;
@@ -456,7 +456,7 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
             }
         }
     }
-    foreach (auto a, processed) {
+    for (auto a : processed) {
         m_processedSegments.insertSegment(a);
     }
 }
@@ -464,8 +464,8 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
 value_type Segmentation::checkSupervoxelEdges(const SupervoxelSet & set_a, const SupervoxelSet & set_b)
 {
     value_type max_aff = 0;
-    foreach(auto b, set_b) {
-        foreach(auto a, (set_a & SupervoxelSet::fromList(m_svInfo->neighbours(b)))) {
+    for (auto b : set_b) {
+        for (auto a : (set_a & SupervoxelSet::fromList(m_svInfo->neighbours(b)))) {
             const MeanPlusEdge * edge = m_svInfo->edge(a,b);
             if (edge->num > 1500) {
                 continue;
@@ -493,7 +493,7 @@ void Segmentation::attachSmallSegments(SupervoxelDict & mergeGraph)
     while (keep_going) {
         keep_going = false;
         SupervoxelSet new_candidates;
-        foreach (auto b, (small_segs - attached)) {
+        for (auto b : (small_segs - attached)) {
             auto set_b = m_segInfo->supervoxelList(b);
             if (set_b.isEmpty()) {
                 set_b.insert(b);
@@ -508,7 +508,7 @@ void Segmentation::attachSmallSegments(SupervoxelDict & mergeGraph)
             }
             id_type max_a = 0;
             value_type max_aff = 0;
-            foreach (auto a, (SupervoxelSet::fromList(m_segInfo->neighbours(b)) & dend_candidates)) {
+            for (auto a : (SupervoxelSet::fromList(m_segInfo->neighbours(b)) & dend_candidates)) {
                 SupervoxelSet & set_a = m_segInfo->supervoxelList(a);
                 if (set_a.isEmpty()) {
                     set_a.insert(a);
@@ -532,7 +532,7 @@ void Segmentation::attachSmallSegments(SupervoxelDict & mergeGraph)
         }
         dend_candidates = new_candidates;
     }
-    foreach (auto a, attached) {
+    for (auto a : attached) {
         m_processedSegments.insertSegment(a);
     }
     //return attached;
@@ -542,13 +542,13 @@ id_type Segmentation::matchSpine(const SupervoxelSet & spineEnds, const Supervox
 {
     value_type max_mean = 0;
     id_type target = 0;
-    foreach (auto d, dend_candidates) {
-        foreach (auto a, spineEnds) {
+    for (auto d : dend_candidates) {
+        for (auto a : spineEnds) {
             auto candidates = ((SupervoxelSet::fromList(m_svInfo->neighbours(a)) & m_dendrites.freeEnds(d)) - spine);
             if (spine.size() >= 3) {
                 candidates += (SupervoxelSet::fromList(m_svInfo->neighbours(a)) & m_dendrites.shaft(d));
             }
-            foreach (auto b, candidates) {
+            for (auto b : candidates) {
                 auto edge = m_svInfo->edge(a,b);
                 value_type tmp = edge->aff/edge->area;
                 if (tmp > max_mean) {
@@ -559,8 +559,8 @@ id_type Segmentation::matchSpine(const SupervoxelSet & spineEnds, const Supervox
         }
     }
     if (spine.size() >= 5 && max_mean < m_reliableMeanAffinity) {
-        foreach (auto a, spineEnds) {
-            foreach (auto b, SupervoxelSet::fromList(m_svInfo->neighbours(a)) - spine) {
+        for (auto a : spineEnds) {
+            for (auto b : SupervoxelSet::fromList(m_svInfo->neighbours(a)) - spine) {
                 auto edge = m_svInfo->edge(a,b);
                 value_type tmp = edge->aff/edge->area;
                 if (tmp > max_mean) {
@@ -580,7 +580,7 @@ id_type Segmentation::matchSpine(const SupervoxelSet & spineEnds, const Supervox
 void Segmentation::attachSpines(SupervoxelDict & mergeGraph)
 {
     SupervoxelSet processed;
-    foreach (auto a, m_spines.segids()) {
+    for (auto a : m_spines.segids()) {
         if (m_processedSegments.segids().contains(a)) {
             continue;
         }
@@ -636,7 +636,7 @@ void Segmentation::attachSpines(SupervoxelDict & mergeGraph)
             }
         }
     }
-    foreach (auto a, processed) {
+    for (auto a : processed) {
         m_processedSegments.insertSegment(a);
     }
 }

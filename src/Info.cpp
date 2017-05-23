@@ -9,7 +9,7 @@ std::vector<MeanPlusEdge *> generate_edges(const QVector<QByteArray *> lines)
 {
     std::vector<MeanPlusEdge * > edges;
     edges.reserve(lines.size());
-    foreach (auto line, lines) {
+    for (auto line : lines) {
         edges.push_back(new MeanPlusEdge(line));
     }
     return edges;
@@ -189,9 +189,9 @@ void SupervoxelInfo::readRegionGraph(const QString & filename)
     if (rg_entries.size() > 0) {
         futures << QtConcurrent::run(generate_edges, QVector<QByteArray *>(rg_entries));
     }
-    foreach (auto f, futures) {
+    for (auto f : futures) {
         auto edges = f.result();
-        foreach (auto edge, edges) {
+        for (auto edge : edges) {
             m_regionGraph[edge->p1][edge->p2] = edge;
             m_regionGraph[edge->p2][edge->p1] = edge;
         }
@@ -213,7 +213,7 @@ void SupervoxelInfo::agglomerate(SupervoxelDict & supervoxelDict)
             clst.insert(p);
             p = m_segmentDict[p];
         }
-        foreach(auto x, clst) {
+        for (auto x : clst) {
             m_segmentDict[x] = p;
         }
         if (supervoxelDict.contains(p)) {

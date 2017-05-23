@@ -8,7 +8,7 @@ void OutputRegionGraph::appendEdges(const SupervoxelDict & mergeGraph, value_typ
 {
     SupervoxelSet visited;
     qDebug() << "Merge" << mergeGraph.keys().size() << "segments at threshold:" << threshold ;
-    foreach (auto p, mergeGraph.keys()) {
+    for (auto p : mergeGraph.keys()) {
         QVector<id_type> segGroup;
         if (visited.contains(p)) {
             continue;
@@ -22,7 +22,7 @@ void OutputRegionGraph::appendEdges(const SupervoxelDict & mergeGraph, value_typ
                 continue;
             }
             visited.insert(root);
-            foreach(auto neighbour, mergeGraph[root]) {
+            for (auto neighbour : mergeGraph[root]) {
                 if (!visited.contains(neighbour)) {
                     queue.enqueue(neighbour);
                     segGroup.append(neighbour);
@@ -55,12 +55,12 @@ void OutputRegionGraph::updateRegionGraph(id_type maxSegId)
 {
     QSet<const MeanPlusEdge *> visited;
     QStringList region_graph_output;
-    foreach (auto edge, m_edges.keys()) {
+    for (auto edge : m_edges.keys()) {
         region_graph_output << printEdge(edge, m_edges[edge]);
         visited.insert(edge);
     }
-    foreach (auto a, m_regionGraph.keys()) {
-        foreach (auto b, m_regionGraph[a].keys()) {
+    for (auto a : m_regionGraph.keys()) {
+        for (auto b : m_regionGraph[a].keys()) {
             auto edge = m_regionGraph[a][b];
             if (visited.contains(edge)) {
                 continue;
@@ -77,7 +77,7 @@ void OutputRegionGraph::updateRegionGraph(id_type maxSegId)
     }
     QTextStream outputStream(&outputFile);
     outputStream << maxSegId << " " << maxSegId+1 << " "<< region_graph_output.size() << "\n";
-    foreach (auto s, region_graph_output) {
+    for (auto s : region_graph_output) {
         outputStream << s;
     }
 }
