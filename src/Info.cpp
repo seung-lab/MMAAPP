@@ -207,7 +207,7 @@ void SupervoxelInfo::agglomerate(SupervoxelDict & supervoxelDict)
         if (p == c) {
             continue;
         }
-        QSet<id_type > clst;
+        SupervoxelSet clst;
         clst.insert(c);
         while (m_segmentDict[p] != p) {
             clst.insert(p);

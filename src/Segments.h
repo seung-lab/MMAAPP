@@ -74,7 +74,7 @@ public:
     virtual ~Spines() {}
     id_type segid(id_type freeend) const { return m_segment[freeend]; }
     const QList<id_type > allFreeEnds() {return m_segment.keys();}
-    QSet<id_type > & freeEnds(id_type segid) {return m_freeends[segid];}
+    SupervoxelSet & freeEnds(id_type segid) {return m_freeends[segid];}
     id_type psd(id_type segid) const { return m_psd[segid]; }
     id_type anchor(id_type freeend) const { return m_anchors[freeend]; }
     virtual void insertSegment(id_type segid, id_type psd) { m_segids.insert(segid); m_psd[segid] = psd;};
