@@ -236,7 +236,7 @@ bool Segmentation::testFreeEnd(id_type sid, const SupervoxelSet & svList)
         return false;
     }
     SupervoxelSet neighbours_of_neighbours;
-    for(auto neighbour : m_svInfo->neighbours(sid)) {
+    for (auto neighbour : m_svInfo->neighbours(sid)) {
         if (svList.contains(neighbour)) {
             if (m_svInfo->atBoundary(neighbour)) {
                 return false;
