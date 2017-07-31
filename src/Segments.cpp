@@ -433,24 +433,55 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
     qDebug() << "match axons:" << axons.size() << "candidates";
     auto all_free_ends = SupervoxelSet::fromList(m_axons.allFreeEnds());
     for (auto a : axons) {
-        auto matches = SupervoxelSet::fromList(m_segInfo->neighbours(a)) & axons;
-        for (auto b : matches) {
-            const MeanPlusEdge * seg_edge = m_segInfo->edge(a,b);
-            if (visitedEdges.contains(seg_edge)) {
-                continue;
+        for (auto v1 : m_axons.freeends(a)) {
+            double max_aff = -1;
+            id_type max_b = 0;
+            id_type max_v2 = 0;
+            for (auto v2 : (SupervoxelSet::fromList(m_svInfo->neighbours(v1)) - m_segInfo->supervoxelList(a))) {
+                auto b = m_svInfo->segment(v2);
+                const MeanPlusEdge * seg_edge = m_segInfo->edge(a,b);
+                const MeanPlusEdge * sv_edge = m_svInfo->edge(v1,v2);
+                double mean_aff = sv_edge->aff/sv_edge->area;
+                bool v1_freeend = false;
+                bool v2_freeend = false;
+                if (visitedEdges.contains(seg_edge)) {
+                    continue;
+                }
+                if (mean_aff < m_reliableMeanAffinity) {
+                    continue;
+                }
+                if (m_segInfo->supervoxelList(b).size() < 100) {
+                    continue;
+                }
+                visitedEdges.insert(seg_edge);
+                if (all_free_ends.contains(v1)) { // v1 is already verified as a freeend
+                    v1_freeend = true;
+                }
+
+                if (all_free_ends.contains(v2) || testFreeEnd(v2, m_segInfo->supervoxelList(b))) {
+                    v2_freeend = true;
+                }
+
+                if (!v1_freeend || m_processedSegments.segids().contains(v1)) {
+                    continue;
+                }
+                if (!v2_freeend || m_processedSegments.segids().contains(v2)) {
+                    continue;
+                }
+                if (checkSupervoxelEdge(sv_edge) && max_aff < mean_aff) {
+                    max_aff = mean_aff;
+                    max_b = b;
+                    max_v2 = v2;
+                }
             }
-            visitedEdges.insert(seg_edge);
-            if (!all_free_ends.contains(seg_edge->v1) || m_processedSegments.segids().contains(seg_edge->v1)) {
-                continue;
-            }
-            if (!all_free_ends.contains(seg_edge->v2) || m_processedSegments.segids().contains(seg_edge->v2)) {
-                continue;
-            }
-            if (checkSegEdge(seg_edge)) {
-                qDebug() << qMin(a,b) << qMax(a,b);
-                processed << a << b;
-                mergeGraph[a].insert(b);
-                mergeGraph[b].insert(a);
+            if (max_aff > 0) {
+                qDebug() << qMin(a,max_b) << qMax(a,max_b) << v1 << max_v2;
+                if (!m_axons.segids().contains(max_b)) {
+                    qDebug() << max_b << "is not an axon";
+                }
+                processed << a << max_b;
+                mergeGraph[a].insert(max_b);
+                mergeGraph[max_b].insert(a);
             }
         }
     }
