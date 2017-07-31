@@ -228,32 +228,39 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
     return ends;
 }
 
+bool Segmentation::testFreeEnd(id_type sid, const SupervoxelSet & svList)
+{
+    SupervoxelSet end_segments;
+    bool near_boundary = false;
+    if (m_svInfo->atBoundary(sid)) {
+        return false;
+    }
+    SupervoxelSet neighbours_of_neighbours;
+    for(auto neighbour : m_svInfo->neighbours(sid)) {
+        if (svList.contains(neighbour)) {
+            if (m_svInfo->atBoundary(neighbour)) {
+                return false;
+            }
+            neighbours_of_neighbours |= (SupervoxelSet::fromList(m_svInfo->neighbours(neighbour)) & svList);
+            end_segments.insert(neighbour);
+        }
+    }
+    if (near_boundary || neighbours_of_neighbours.size() > 7) {
+        return false;
+    }
+    end_segments.insert(sid);
+    int cc = checkConnectivity(svList, end_segments).size();
+    if (cc == 1) {
+        return true;
+    }
+    return false;
+}
+
 SupervoxelSet Segmentation::verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList)
 {
     SupervoxelSet free_ends;
     for (auto s : ends) {
-        SupervoxelSet end_segments;
-        bool near_boundary = false;
-        if (m_svInfo->atBoundary(s)) {
-            continue;
-        }
-        SupervoxelSet neighbours_of_neighbours;
-        for (auto neighbour : m_svInfo->neighbours(s)) {
-            if (svList.contains(neighbour)) {
-                if (m_svInfo->atBoundary(neighbour)) {
-                    near_boundary = true;
-                    break;
-                }
-                neighbours_of_neighbours |= (SupervoxelSet::fromList(m_svInfo->neighbours(neighbour)) & svList);
-                end_segments.insert(neighbour);
-            }
-        }
-        if (near_boundary || neighbours_of_neighbours.size() > 7) {
-            continue;
-        }
-        end_segments.insert(s);
-        int cc = checkConnectivity(svList, end_segments).size();
-        if (cc == 1) {
+        if (testFreeEnd(s, svList)) {
             free_ends.insert(s);
         }
     }

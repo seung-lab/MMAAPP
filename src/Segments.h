@@ -126,6 +126,7 @@ public:
     bool isDendrite(QVector<value_type > sem, size_type vol);
     SupervoxelSet checkConnectivity(const SupervoxelSet & svList, const SupervoxelSet & exclude);
     SupervoxelSet findEnds(const SupervoxelSet & svList, id_type seed, const SupervoxelSet & exclude, bool free = true);
+    bool testFreeEnd(id_type sid, const SupervoxelSet & svList);
     SupervoxelSet verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList);
     bool processDendrite(id_type segid);
     bool processSpine(id_type segid, const SupervoxelSet & freeEnds);
