@@ -402,22 +402,13 @@ void Segmentation::init()
     }
 }
 
-bool Segmentation::checkSegEdge(const MeanPlusEdge * edge)
+bool Segmentation::checkSupervoxelEdge(const MeanPlusEdge * edge)
 {
-    const SupervoxelSet & seg1 = m_segInfo->supervoxelList(edge->p1);
-    const SupervoxelSet & seg2 = m_segInfo->supervoxelList(edge->p2);
-    SupervoxelSet neighbour1;
-    SupervoxelSet neighbour2;
-    if (seg1.contains(edge->v1)) {
-        neighbour1 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v1));
-        neighbour2 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v2));
-    } else {
-        neighbour1 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v2));
-        neighbour2 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v1));
-    }
-    const MeanPlusEdge * supervoxelEdge = m_svInfo->edge(edge->v1, edge->v2);
-    if  ((supervoxelEdge->aff/supervoxelEdge->area) < m_reliableMeanAffinity) {
-    //if  ((edge->aff/edge->area) < m_reliableMeanAffinity) {
+    const SupervoxelSet & seg1 = m_segInfo->supervoxelList(edge->v1);
+    const SupervoxelSet & seg2 = m_segInfo->supervoxelList(edge->v2);
+    SupervoxelSet neighbour1 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v1));
+    SupervoxelSet neighbour2 = SupervoxelSet::fromList(m_svInfo->neighbours(edge->v2));
+    if  ((edge->aff/edge->area) < m_reliableMeanAffinity) {
         return false;
     }
 

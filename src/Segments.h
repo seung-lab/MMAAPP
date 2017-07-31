@@ -130,7 +130,7 @@ public:
     SupervoxelSet verifyFreeEnds(const SupervoxelSet & ends, const SupervoxelSet & svList);
     bool processDendrite(id_type segid);
     bool processSpine(id_type segid, const SupervoxelSet & freeEnds);
-    bool checkSegEdge(const MeanPlusEdge * edge);
+    bool checkSupervoxelEdge(const MeanPlusEdge * edge);
     void postProcess();
     void matchAxons(SupervoxelDict & mergeGraph);
     value_type checkSupervoxelEdges(const SupervoxelSet & set_a, const SupervoxelSet & set_b);
