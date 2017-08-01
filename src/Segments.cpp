@@ -228,6 +228,26 @@ SupervoxelSet Segmentation::findEnds(const SupervoxelSet & svList, id_type seed,
     return ends;
 }
 
+SupervoxelSet Segmentation::localPatch(id_type seed, const SupervoxelSet & svList)
+{
+    QQueue<id_type > queue;
+    queue.enqueue(seed);
+    SupervoxelSet visited;
+    while (!queue.isEmpty() && visited.size() < 100) {
+        auto root = queue.dequeue();
+        if (visited.contains(root)) {
+            continue;
+        }
+        visited.insert(root);
+        for (auto neighbour : m_svInfo->neighbours(root)) {
+            if (visited.contains(neighbour) || queue.contains(neighbour) || !svList.contains(neighbour)) {
+                continue;
+            }
+        }
+    }
+    return visited;
+}
+
 bool Segmentation::testFreeEnd(id_type sid, const SupervoxelSet & svList)
 {
     SupervoxelSet end_segments;
@@ -459,6 +479,13 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
                 }
 
                 if (all_free_ends.contains(v2) || testFreeEnd(v2, m_segInfo->supervoxelList(b))) {
+                    auto patch = localPatch(v2, m_segInfo->supervoxelList(b));
+                    auto sem_p = sumSem(patch);
+                    auto size_p = sumSize(patch);
+                    if (isGlial(sem_p, size_p)) {
+                        qDebug() << "Reject:" << b << v2 << "based on the semantic data";
+                        continue;
+                    }
                     v2_freeend = true;
                 }
 
