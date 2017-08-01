@@ -489,10 +489,10 @@ void Segmentation::matchAxons(SupervoxelDict & mergeGraph)
                     v2_freeend = true;
                 }
 
-                if (!v1_freeend || m_processedSegments.segids().contains(v1)) {
+                if (!v1_freeend || m_processedSegments.segids().contains(a)) {
                     continue;
                 }
-                if (!v2_freeend || m_processedSegments.segids().contains(v2)) {
+                if (!v2_freeend || m_processedSegments.segids().contains(b)) {
                     continue;
                 }
                 if (checkSupervoxelEdge(sv_edge) && max_aff < mean_aff) {
